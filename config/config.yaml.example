@@ -1,0 +1,4 @@
+twitch:
+  username: "your_twitch_username"
+  oauth: "your_twitch_oauth_token"
+  channel: "your_twitch_channel_name"
