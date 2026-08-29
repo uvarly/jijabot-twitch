@@ -2,26 +2,51 @@ package main
 
 import (
 	"context"
-	"log"
 	"os/signal"
+	"syscall"
 	"time"
 
-	"jijabot/internal/jijabot"
+	"jijabot/internal/app"
+	"jijabot/internal/config"
+	"jijabot/internal/eventbus"
+	"jijabot/internal/logger"
+	"jijabot/internal/twitchbot"
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background())
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	app := jijabot.NewApp()
-	if err := app.Run(ctx); err != nil {
-		log.Fatalf("failed to run app: %v", err)
+	logger := logger.NewLogger()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		logger.Error("failed to load config: %v", err)
+		return
+	}
+
+	bus := eventbus.NewEventBus()
+
+	bot, err := twitchbot.NewTwitchBot(cfg, bus)
+	if err != nil {
+		logger.Error("failed to create twitch bot: %v", err)
+		return
+	}
+
+	application := app.NewApp(bot)
+	appRunErr := make(chan error, 1)
+	go func() { appRunErr <- application.Run(ctx) }()
+
+	select {
+	case err := <-appRunErr:
+		logger.Error("failed to run app: %v", err)
+	case <-ctx.Done():
+		logger.Info("shutdown signal received, shutting down...")
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := app.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("failed to shutdown app: %v", err)
+	if err := application.Shutdown(shutdownCtx); err != nil {
+		logger.Error("failed to shutdown app: %v", err)
 	}
 }

@@ -1,5 +1,7 @@
 package eventbus
 
+type Publisher interface{}
+
 type EventBus struct {
 }
 
