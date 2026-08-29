@@ -25,6 +25,7 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 		client = twitchirc.NewClient(cfg.Twitch.Username, cfg.Twitch.Oauth)
 		bot    = &TwitchBot{
 			client:  client,
+			bus:     bus,
 			channel: cfg.Twitch.Channel,
 		}
 	)
@@ -34,7 +35,13 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 	})
 
 	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
-		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventMessage})
+		bot.bus.Publish(bot.ctx, eventbus.Event{
+			Type: eventbus.EventMessage,
+			Payload: eventbus.MessagePayload{
+				User: message.User.Name,
+				Text: message.Message,
+			},
+		})
 	})
 
 	client.OnUserJoinMessage(func(message twitchirc.UserJoinMessage) {

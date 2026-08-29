@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"jijabot/internal/app"
+	"jijabot/internal/commands"
 	"jijabot/internal/config"
 	"jijabot/internal/eventbus"
 	"jijabot/internal/logger"
@@ -32,6 +33,11 @@ func main() {
 		return
 	}
 
+	router := commands.NewRouter(bot, logger)
+	router.Register(commands.NewHiCommand())
+
+	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
+
 	application := app.NewApp(bot)
 	appRunErr := make(chan error, 1)
 	go func() { appRunErr <- application.Run(ctx) }()
@@ -39,6 +45,7 @@ func main() {
 	select {
 	case err := <-appRunErr:
 		logger.Error("failed to run app: %v", err)
+		return
 	case <-ctx.Done():
 		logger.Info("shutdown signal received, shutting down...")
 	}
