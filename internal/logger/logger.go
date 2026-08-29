@@ -5,9 +5,7 @@ import (
 	"log"
 )
 
-type Logger struct {
-	logLevel string
-}
+type Logger struct{}
 
 func NewLogger() *Logger {
 	return &Logger{}

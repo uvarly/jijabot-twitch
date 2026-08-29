@@ -9,8 +9,14 @@ import (
 	"jijabot/internal/eventbus"
 )
 
+type MessageSender interface {
+	Say(channel string, text string)
+}
+
 type TwitchBot struct {
+	ctx     context.Context
 	client  IRCCLient
+	bus     eventbus.Publisher
 	channel string
 }
 
@@ -23,11 +29,17 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 		}
 	)
 
-	client.OnConnect(func() {})
+	client.OnConnect(func() {
+		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventConnected})
+	})
 
-	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {})
+	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
+		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventMessage})
+	})
 
-	client.OnUserJoinMessage(func(message twitchirc.UserJoinMessage) {})
+	client.OnUserJoinMessage(func(message twitchirc.UserJoinMessage) {
+		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventJoin})
+	})
 
 	return bot, nil
 }
@@ -40,4 +52,9 @@ func (tb *TwitchBot) Connect(ctx context.Context) error {
 
 func (tb *TwitchBot) Disconnect() error {
 	return tb.client.Disconnect()
+}
+
+func (tb *TwitchBot) Say(message string) error {
+	tb.client.Say(tb.channel, message)
+	return nil
 }
