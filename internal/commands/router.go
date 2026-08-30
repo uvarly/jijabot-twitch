@@ -15,10 +15,10 @@ type Router struct {
 	mu        sync.RWMutex
 	responder Responder
 	commands  map[string]Command
-	logger    *logger.Logger
+	logger    logger.Logger
 }
 
-func NewRouter(r Responder, l *logger.Logger) *Router {
+func NewRouter(r Responder, l logger.Logger) *Router {
 	return &Router{
 		responder: r,
 		commands:  make(map[string]Command),
