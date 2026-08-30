@@ -2,6 +2,8 @@ package commands
 
 import "context"
 
+const streamerNickname = "unclekost"
+
 type Payload struct {
 	User string
 	Text string

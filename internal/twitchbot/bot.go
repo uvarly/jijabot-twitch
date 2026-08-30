@@ -2,6 +2,7 @@ package twitchbot
 
 import (
 	"context"
+	"fmt"
 
 	twitchirc "github.com/gempir/go-twitch-irc/v4"
 
@@ -31,10 +32,12 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 	)
 
 	client.OnConnect(func() {
+		fmt.Printf("Connected to Twitch chat\n")
 		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventConnected})
 	})
 
 	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
+		fmt.Printf("Received private message from %s: %s\n", message.User.Name, message.Message)
 		bot.bus.Publish(bot.ctx, eventbus.Event{
 			Type: eventbus.EventMessage,
 			Payload: eventbus.MessagePayload{
@@ -45,6 +48,7 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 	})
 
 	client.OnUserJoinMessage(func(message twitchirc.UserJoinMessage) {
+		fmt.Printf("User %s joined the channel\n", message.User)
 		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventJoin})
 	})
 

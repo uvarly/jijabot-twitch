@@ -35,6 +35,7 @@ func main() {
 
 	router := commands.NewRouter(bot, logger)
 	router.Register(commands.NewHiCommand())
+	router.Register(commands.NewPokeCommand())
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 
