@@ -38,22 +38,21 @@ func (r *Refresher) Refresh(ctx context.Context, refreshToken string) (Token, er
 		"grant_type":    {"refresh_token"},
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.endpoint, strings.NewReader(form.Encode()))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, r.endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
 		return Token{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "client_id=CLIENT_ID&client_secret=CLIENT_SECRET&refresh_token=REFRESH_TOKEN&grant_type=refresh_token" https://api.twitch.tv/kraken/oauth2/token
-	resp, err := r.httpDoer.Do(req)
+	response, err := r.httpDoer.Do(request)
 	if err != nil {
 		return Token{}, fmt.Errorf("failed to do a request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return Token{}, fmt.Errorf("failed to refresh token, received status: %s", resp.Status)
+	if response.StatusCode != http.StatusOK {
+		return Token{}, fmt.Errorf("failed to refresh token, received status: %s", response.Status)
 	}
 
 	var token struct {
@@ -62,7 +61,7 @@ func (r *Refresher) Refresh(ctx context.Context, refreshToken string) (Token, er
 		ExpiresIn    int    `json:"expires_in"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+	if err := json.NewDecoder(response.Body).Decode(&token); err != nil {
 		return Token{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 

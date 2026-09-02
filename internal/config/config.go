@@ -12,12 +12,18 @@ const configPath = "config/config.yaml"
 
 type Config struct {
 	Twitch TwitchConfig `yaml:"twitch"`
+	Oauth  OauthConfig  `yaml:"oauth"`
 }
 
 type TwitchConfig struct {
-	Username string `yaml:"username" validate:"required"`
-	Oauth    string `yaml:"oauth" validate:"required"`
-	Channel  string `yaml:"channel" validate:"required"`
+	Username     string `yaml:"username" validate:"required"`
+	Channel      string `yaml:"channel" validate:"required"`
+	ClientID     string `yaml:"client_id" validate:"required"`
+	ClientSecret string `yaml:"client_secret" validate:"required"`
+}
+
+type OauthConfig struct {
+	TokenFile string `yaml:"token_file" validate:"required"`
 }
 
 func NewConfig() (Config, error) {

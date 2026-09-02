@@ -8,6 +8,8 @@ import (
 
 	"jijabot/internal/config"
 	"jijabot/internal/eventbus"
+	"jijabot/internal/logger"
+	"jijabot/internal/oauth"
 )
 
 type MessageSender interface {
@@ -15,28 +17,33 @@ type MessageSender interface {
 }
 
 type TwitchBot struct {
-	ctx     context.Context
-	client  IRCCLient
-	bus     eventbus.Publisher
-	channel string
+	ctx           context.Context
+	client        IRCCLient
+	bus           eventbus.Publisher
+	tokenProvider oauth.TokenProvider
+	log           logger.Logger
+	channel       string
 }
 
-func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error) {
+func NewTwitchBot(cfg config.Config, bus eventbus.Publisher, tokenProvider oauth.TokenProvider, log logger.Logger) (*TwitchBot, error) {
 	var (
-		client = twitchirc.NewClient(cfg.Twitch.Username, cfg.Twitch.Oauth)
+		client = twitchirc.NewClient(cfg.Twitch.Username, "")
 		bot    = &TwitchBot{
-			client:  client,
-			bus:     bus,
-			channel: cfg.Twitch.Channel,
+			client:        client,
+			bus:           bus,
+			tokenProvider: tokenProvider,
+			log:           log,
+			channel:       cfg.Twitch.Channel,
 		}
 	)
 
 	client.OnConnect(func() {
-		fmt.Printf("Connected to Twitch chat\n")
+		bot.log.Info("connected to Twitch chat", "channel", bot.channel)
 		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventConnected})
 	})
 
 	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
+		bot.log.Debug("received message", "user", message.User.Name, "message", message.Message)
 		fmt.Printf("Received private message from %s: %s\n", message.User.Name, message.Message)
 		bot.bus.Publish(bot.ctx, eventbus.Event{
 			Type: eventbus.EventMessage,
@@ -48,7 +55,7 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 	})
 
 	client.OnUserJoinMessage(func(message twitchirc.UserJoinMessage) {
-		fmt.Printf("User %s joined the channel\n", message.User)
+		bot.log.Debug("user joined channel", "user", message.User)
 		bot.bus.Publish(bot.ctx, eventbus.Event{Type: eventbus.EventJoin})
 	})
 
@@ -56,6 +63,12 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher) (*TwitchBot, error)
 }
 
 func (tb *TwitchBot) Connect(ctx context.Context) error {
+	token, err := tb.tokenProvider.Token(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get token: %w", err)
+	}
+
+	tb.client.SetIRCToken("oauth:" + token.AccessToken)
 	tb.client.Join(tb.channel)
 
 	return tb.client.Connect()

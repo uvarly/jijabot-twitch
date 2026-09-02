@@ -12,7 +12,7 @@ type Token struct {
 }
 
 func (t Token) IsValid() bool {
-	return t.AccessToken != "" && !t.IsExpired()
+	return t.AccessToken != "" && t.RefreshToken != "" && !t.IsExpired()
 }
 
 func (t Token) IsExpired() bool {
@@ -25,5 +25,5 @@ type TokenProvider interface {
 
 type TokenStore interface {
 	Load(ctx context.Context) (Token, error)
-	Save(ctx context.Context, t Token) error
+	Save(ctx context.Context, token Token) error
 }

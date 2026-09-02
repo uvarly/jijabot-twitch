@@ -7,6 +7,7 @@ type IRCCLient interface {
 	Disconnect() error
 	Join(channels ...string)
 	Say(channel string, text string)
+	SetIRCToken(ircToken string)
 	OnConnect(callback func())
 	OnPrivateMessage(callback func(message twitchirc.PrivateMessage))
 	OnUserJoinMessage(callback func(message twitchirc.UserJoinMessage))

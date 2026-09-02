@@ -1,4 +1,8 @@
 twitch:
   username: "your_twitch_username"
-  oauth: "your_twitch_oauth_token"
   channel: "your_twitch_channel_name"
+  client_id: "your_app_client_id"
+  client_secret: "you_app_client_secret"
+
+oauth:
+  token_file: "your_token_file_path" # (ex: "config/token.json")

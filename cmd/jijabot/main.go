@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"jijabot/internal/config"
 	"jijabot/internal/eventbus"
 	"jijabot/internal/logger"
+	"jijabot/internal/oauth"
 	"jijabot/internal/twitchbot"
 )
 
@@ -22,15 +25,33 @@ func main() {
 	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat())
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Error("failed to load config: %v", err)
+		log.Error("failed to load config", "error", err)
 		return
 	}
 
 	bus := eventbus.NewEventBus()
-
-	bot, err := twitchbot.NewTwitchBot(cfg, bus)
+	store := oauth.NewFileStore(cfg.Oauth.TokenFile)
+	_, err = store.Load(ctx)
 	if err != nil {
-		log.Error("failed to create twitch bot: %v", err)
+		log.Info("no token file found, starting bot authorization flow...")
+
+		deviceAuthorizer := oauth.NewDeviceAuthorizer(
+			cfg.Twitch.ClientID,
+			[]string{"chat:read", "chat:edit"},
+			http.DefaultClient,
+		)
+
+		if _, err = oauth.Bootstrap(ctx, os.Stdout, deviceAuthorizer, store); err != nil {
+			log.Error("failed to bootstrap oauth token", "error", err)
+			return
+		}
+	}
+
+	refresher := oauth.NewRefresher(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret, oauth.TwitchTokenEndpoint, http.DefaultClient)
+	tokenSource := oauth.NewSource(store, refresher)
+	bot, err := twitchbot.NewTwitchBot(cfg, bus, tokenSource, log.With("component", "twitchbot"))
+	if err != nil {
+		log.Error("failed to create twitch bot", "error", err)
 		return
 	}
 
@@ -46,7 +67,7 @@ func main() {
 
 	select {
 	case err := <-appRunErr:
-		log.Error("failed to run app: %v", err)
+		log.Error("failed to run app", "error", err)
 		return
 	case <-ctx.Done():
 		log.Info("shutdown signal received, shutting down...")
@@ -56,6 +77,6 @@ func main() {
 	defer cancel()
 
 	if err := application.Shutdown(shutdownCtx); err != nil {
-		log.Error("failed to shutdown app: %v", err)
+		log.Error("failed to shutdown app", "error", err)
 	}
 }
