@@ -11,11 +11,16 @@ import (
 const configPath = "config/config.yaml"
 
 type Config struct {
-	Twitch TwitchConfig `yaml:"twitch"`
-	Oauth  OauthConfig  `yaml:"oauth"`
+	Database  DatabaseConfig  `yaml:"database"`
+	TwitchBot TwitchBotConfig `yaml:"twitch"`
+	Oauth     OauthConfig     `yaml:"oauth"`
 }
 
-type TwitchConfig struct {
+type DatabaseConfig struct {
+	Path string `yaml:"path" validate:"required"`
+}
+
+type TwitchBotConfig struct {
 	Username     string `yaml:"username" validate:"required"`
 	Channel      string `yaml:"channel" validate:"required"`
 	ClientID     string `yaml:"client_id" validate:"required"`
@@ -23,7 +28,7 @@ type TwitchConfig struct {
 }
 
 type OauthConfig struct {
-	TokenFile string `yaml:"token_file" validate:"required"`
+	TokenFilePath string `yaml:"token_file_path" validate:"required"`
 }
 
 func NewConfig() (Config, error) {

@@ -27,13 +27,13 @@ type TwitchBot struct {
 
 func NewTwitchBot(cfg config.Config, bus eventbus.Publisher, tokenProvider oauth.TokenProvider, log logger.Logger) (*TwitchBot, error) {
 	var (
-		client = twitchirc.NewClient(cfg.Twitch.Username, "")
+		client = twitchirc.NewClient(cfg.TwitchBot.Username, "")
 		bot    = &TwitchBot{
 			client:        client,
 			bus:           bus,
 			tokenProvider: tokenProvider,
 			log:           log,
-			channel:       cfg.Twitch.Channel,
+			channel:       cfg.TwitchBot.Channel,
 		}
 	)
 

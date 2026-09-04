@@ -12,6 +12,7 @@ import (
 	"jijabot/internal/app"
 	"jijabot/internal/commands"
 	"jijabot/internal/config"
+	"jijabot/internal/database"
 	"jijabot/internal/eventbus"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
@@ -29,14 +30,20 @@ func main() {
 		return
 	}
 
+	_, err = database.Open(ctx, cfg.Database.Path)
+	if err != nil {
+		log.Error("failed to open database", "error", err)
+		return
+	}
+
 	bus := eventbus.NewEventBus()
-	store := oauth.NewFileStore(cfg.Oauth.TokenFile)
+	store := oauth.NewFileStore(cfg.Oauth.TokenFilePath)
 	_, err = store.Load(ctx)
 	if err != nil {
 		log.Info("no token file found, starting bot authorization flow...")
 
 		deviceAuthorizer := oauth.NewDeviceAuthorizer(
-			cfg.Twitch.ClientID,
+			cfg.TwitchBot.ClientID,
 			[]string{"chat:read", "chat:edit"},
 			http.DefaultClient,
 		)
@@ -47,7 +54,7 @@ func main() {
 		}
 	}
 
-	refresher := oauth.NewRefresher(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret, oauth.TwitchTokenEndpoint, http.DefaultClient)
+	refresher := oauth.NewRefresher(cfg.TwitchBot.ClientID, cfg.TwitchBot.ClientSecret, oauth.TwitchTokenEndpoint, http.DefaultClient)
 	tokenSource := oauth.NewSource(store, refresher)
 	bot, err := twitchbot.NewTwitchBot(cfg, bus, tokenSource, log.With("component", "twitchbot"))
 	if err != nil {
