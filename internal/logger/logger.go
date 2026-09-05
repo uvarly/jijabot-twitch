@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
@@ -16,6 +17,10 @@ type Logger interface {
 	Info(message string, args ...any)
 	Warn(message string, args ...any)
 	Error(message string, args ...any)
+	DebugContext(ctx context.Context, message string, args ...any)
+	InfoContext(ctx context.Context, message string, args ...any)
+	WarnContext(ctx context.Context, message string, args ...any)
+	ErrorContext(ctx context.Context, message string, args ...any)
 
 	// Usage: logger.With("component", "<component name>")
 	With(args ...any) Logger
@@ -97,6 +102,22 @@ func (sl *slogLogger) Info(m string, args ...any) { sl.l.Info(m, args...) }
 func (sl *slogLogger) Warn(m string, args ...any) { sl.l.Warn(m, args...) }
 
 func (sl *slogLogger) Error(m string, args ...any) { sl.l.Error(m, args...) }
+
+func (sl *slogLogger) DebugContext(ctx context.Context, m string, args ...any) {
+	sl.l.DebugContext(ctx, m, args...)
+}
+
+func (sl *slogLogger) InfoContext(ctx context.Context, m string, args ...any) {
+	sl.l.InfoContext(ctx, m, args...)
+}
+
+func (sl *slogLogger) WarnContext(ctx context.Context, m string, args ...any) {
+	sl.l.WarnContext(ctx, m, args...)
+}
+
+func (sl *slogLogger) ErrorContext(ctx context.Context, m string, args ...any) {
+	sl.l.ErrorContext(ctx, m, args...)
+}
 
 func (sl *slogLogger) With(args ...any) Logger {
 	return &slogLogger{l: sl.l.With(args...)}

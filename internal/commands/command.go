@@ -5,9 +5,10 @@ import "context"
 const streamerNickname = "unclekost"
 
 type Payload struct {
-	User string
-	Text string
-	Args []string
+	User   string
+	UserID string
+	Text   string
+	Args   []string
 }
 
 type Command interface {

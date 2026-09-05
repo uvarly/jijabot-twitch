@@ -15,7 +15,7 @@ import (
 var migrationFiles embed.FS
 
 func Open(ctx context.Context, path string) (*sql.DB, error) {
-	dsn := fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)", path)
+	dsn := fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&_texttotime=1", path)
 
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {

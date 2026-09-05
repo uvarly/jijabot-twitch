@@ -14,6 +14,7 @@ type Event struct {
 }
 
 type MessagePayload struct {
-	User string
-	Text string
+	User   string
+	UserID string
+	Text   string
 }

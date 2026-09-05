@@ -54,9 +54,10 @@ func (r *Router) HandleMessage(ctx context.Context, e eventbus.Event) {
 	}
 
 	payload := Payload{
-		User: p.User,
-		Text: p.Text,
-		Args: args,
+		User:   p.User,
+		UserID: p.UserID,
+		Text:   p.Text,
+		Args:   args,
 	}
 
 	if err := cmd.Execute(ctx, payload, r.responder); err != nil {

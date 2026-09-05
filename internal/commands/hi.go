@@ -4,12 +4,18 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"jijabot/internal/logger"
 )
 
-type HiCommand struct{}
+type HiCommand struct {
+	log logger.Logger
+}
 
-func NewHiCommand() *HiCommand {
-	return &HiCommand{}
+func NewHiCommand(log logger.Logger) *HiCommand {
+	return &HiCommand{
+		log: log,
+	}
 }
 
 func (c *HiCommand) Name() string {

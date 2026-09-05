@@ -16,7 +16,16 @@ import (
 	"jijabot/internal/eventbus"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
+	"jijabot/internal/redeem"
+	"jijabot/internal/reward"
 	"jijabot/internal/twitchbot"
+	"jijabot/internal/users"
+	"jijabot/internal/wallet"
+)
+
+const (
+	dailyJijaCoinAmount = 10
+	dailyResetHourUTC   = 12
 )
 
 func main() {
@@ -30,11 +39,12 @@ func main() {
 		return
 	}
 
-	_, err = database.Open(ctx, cfg.Database.Path)
+	db, err := database.Open(ctx, cfg.Database.Path)
 	if err != nil {
 		log.Error("failed to open database", "error", err)
 		return
 	}
+	defer db.Close()
 
 	bus := eventbus.NewEventBus()
 	store := oauth.NewFileStore(cfg.Oauth.TokenFilePath)
@@ -62,9 +72,18 @@ func main() {
 		return
 	}
 
-	router := commands.NewRouter(bot, logger.NoOp())
-	router.Register(commands.NewHiCommand())
-	router.Register(commands.NewPokeCommand())
+	claimer := reward.NewDailyClaimer(
+		db,
+		users.NewSQLiteRepository(db),
+		redeem.NewSQLiteRepository(db),
+		wallet.NewSQLiteRepository(db),
+		dailyJijaCoinAmount,
+		dailyResetHourUTC,
+	)
+
+	router := commands.NewRouter(bot, log.With(log, "component", "router"))
+	router.Register(commands.NewHiCommand(log.With(log, "component", "hi")))
+	router.Register(commands.NewDailyCommand(claimer, log.With(log, "component", "daily")))
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 

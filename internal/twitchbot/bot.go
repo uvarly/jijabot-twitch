@@ -44,12 +44,12 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher, tokenProvider oauth
 
 	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
 		bot.log.Debug("received message", "user", message.User.Name, "message", message.Message)
-		fmt.Printf("Received private message from %s: %s\n", message.User.Name, message.Message)
 		bot.bus.Publish(bot.ctx, eventbus.Event{
 			Type: eventbus.EventMessage,
 			Payload: eventbus.MessagePayload{
-				User: message.User.Name,
-				Text: message.Message,
+				User:   message.User.Name,
+				UserID: message.User.ID,
+				Text:   message.Message,
 			},
 		})
 	})
@@ -63,6 +63,8 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher, tokenProvider oauth
 }
 
 func (tb *TwitchBot) Connect(ctx context.Context) error {
+	tb.ctx = ctx
+
 	token, err := tb.tokenProvider.Token(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get token: %w", err)
