@@ -6,8 +6,13 @@ import (
 	"errors"
 	"fmt"
 
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
+
 	"jijabot/internal/store"
 )
+
+var ErrInsufficientFunds = errors.New("wallet: insufficient funds")
 
 type Repository interface {
 	WithExecutor(executor store.Executor) Repository
@@ -45,20 +50,40 @@ func (r *SQLiteRepository) Balance(ctx context.Context, userID int64) (int64, er
 }
 
 func (r *SQLiteRepository) Credit(ctx context.Context, userID int64, amount int64) (int64, error) {
-	const query = `
-		INSERT INTO jija_coin_wallets (user_id, balance)
-		VALUES (?, ?)
-		ON CONFLICT (user_id) DO UPDATE SET
-			balance = balance + EXCLUDED.balance,
+	var query = `
+		INSERT OR IGNORE INTO jija_coin_wallets (user_id, balance)
+		VALUES (?, 0)
+	`
+
+	if _, err := r.executor.ExecContext(ctx, query, userID); err != nil {
+		return 0, fmt.Errorf("failed to ensure wallet exists: %w", err)
+	}
+
+	query = `
+		UPDATE jija_coin_wallets
+		SET balance = balance + ?,
 			updated_at = CURRENT_TIMESTAMP
+		WHERE user_id = ?
 		RETURNING balance
 	`
 
 	var balance int64
 
-	if err := r.executor.QueryRowContext(ctx, query, userID, amount).Scan(&balance); err != nil {
+	if err := r.executor.QueryRowContext(ctx, query, amount, userID).Scan(&balance); err != nil {
+		if isCheckViolation(err) {
+			return 0, ErrInsufficientFunds
+		}
+
 		return 0, fmt.Errorf("failed to credit balance: %w", err)
 	}
 
 	return balance, nil
+}
+
+func isCheckViolation(err error) bool {
+	if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
+		return sqliteErr.Code() == sqlitelib.SQLITE_CONSTRAINT_CHECK
+	}
+
+	return false
 }

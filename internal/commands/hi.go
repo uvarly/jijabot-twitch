@@ -14,7 +14,7 @@ type HiCommand struct {
 
 func NewHiCommand(log logger.Logger) *HiCommand {
 	return &HiCommand{
-		log: log,
+		log: log.With("command", "!hi"),
 	}
 }
 

@@ -12,8 +12,9 @@ const configPath = "config/config.yaml"
 
 type Config struct {
 	Database  DatabaseConfig  `yaml:"database"`
-	TwitchBot TwitchBotConfig `yaml:"twitch"`
+	TwitchBot TwitchBotConfig `yaml:"twitch_bot"`
 	Oauth     OauthConfig     `yaml:"oauth"`
+	JijaBot   JijaBotConfig   `yaml:"jija_bot"`
 }
 
 type DatabaseConfig struct {
@@ -29,6 +30,23 @@ type TwitchBotConfig struct {
 
 type OauthConfig struct {
 	TokenFilePath string `yaml:"token_file_path" validate:"required"`
+}
+
+type JijaBotConfig struct {
+	Daily DailyConfig `yaml:"daily"`
+	Bet   BetConfig   `yaml:"bet"`
+}
+
+type DailyConfig struct {
+	JijaCoinAmount int64 `yaml:"jija_coin_amount" validate:"required"`
+	ResetHourUTC   int   `yaml:"reset_hour_utc" validate:"required"`
+}
+
+type BetConfig struct {
+	BaseProbability float64 `yaml:"base_probability" validate:"required"`
+	PayoutMultiple  float64 `yaml:"payout_multiple" validate:"required"`
+	DailyLimit      int     `yaml:"daily_limit" validate:"required"`
+	ResetHourUTC    int     `yaml:"reset_hour_utc" validate:"required"`
 }
 
 func NewConfig() (Config, error) {

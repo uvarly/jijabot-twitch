@@ -18,11 +18,11 @@ type Router struct {
 	logger    logger.Logger
 }
 
-func NewRouter(r Responder, l logger.Logger) *Router {
+func NewRouter(r Responder, log logger.Logger) *Router {
 	return &Router{
 		responder: r,
 		commands:  make(map[string]Command),
-		logger:    l,
+		logger:    log.With("component", "router"),
 	}
 }
 

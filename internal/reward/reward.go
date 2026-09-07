@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"jijabot/internal/dailywindow"
 	"jijabot/internal/redeem"
 	"jijabot/internal/store"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
-	"time"
 )
 
 var ErrAlreadyClaimed = redeem.ErrAlreadyClaimed
@@ -17,9 +19,9 @@ type Clock interface {
 	Now() time.Time
 }
 
-type realClock struct{}
+type RealClock struct{}
 
-func (rc realClock) Now() time.Time { return time.Now() }
+func (RealClock) Now() time.Time { return time.Now() }
 
 type Option func(*DailyClaimer)
 
@@ -29,12 +31,13 @@ func WithClock(clock Clock) Option {
 
 type DailyClaimer struct {
 	txBeginner store.TxBeginner
-	user       users.Repository
+	users      users.Repository
 	redeem     redeem.Repository
 	wallet     wallet.Repository
 	clock      Clock
-	amount     int64
-	resetHour  int
+
+	amount    int64
+	resetHour int
 }
 
 func NewDailyClaimer(
@@ -48,10 +51,10 @@ func NewDailyClaimer(
 ) *DailyClaimer {
 	dailyClaimer := &DailyClaimer{
 		txBeginner: txBeginner,
-		user:       userRepository,
+		users:      userRepository,
 		redeem:     redeemRepository,
 		wallet:     walletRepository,
-		clock:      realClock{},
+		clock:      RealClock{},
 		amount:     amount,
 		resetHour:  resetHour,
 	}
@@ -72,18 +75,18 @@ func (dc *DailyClaimer) Claim(ctx context.Context, twitchUserID, username string
 	}
 	defer tx.Rollback()
 
-	txUser := dc.user.WithExecutor(tx)
-	txRedeem := dc.redeem.WithExecutor(tx)
-	txWallet := dc.wallet.WithExecutor(tx)
+	userTx := dc.users.WithExecutor(tx)
+	redeemTx := dc.redeem.WithExecutor(tx)
+	walletTx := dc.wallet.WithExecutor(tx)
 
-	user, err := txUser.GetOrCreate(ctx, twitchUserID, username)
+	user, err := userTx.GetOrCreate(ctx, twitchUserID, username)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get or create user: %w", err)
 	}
 
-	period := redeem.PeriodKey(dc.clock.Now(), dc.resetHour)
+	period := dailywindow.Key(dc.clock.Now(), dc.resetHour)
 
-	if err := txRedeem.Claim(ctx, user.ID, dc.amount, period); err != nil {
+	if err := redeemTx.Claim(ctx, user.ID, dc.amount, period); err != nil {
 		if errors.Is(err, redeem.ErrAlreadyClaimed) {
 			return 0, ErrAlreadyClaimed
 		}
@@ -91,7 +94,7 @@ func (dc *DailyClaimer) Claim(ctx context.Context, twitchUserID, username string
 		return 0, fmt.Errorf("failed to record claim: %w", err)
 	}
 
-	balance, err := txWallet.Credit(ctx, user.ID, dc.amount)
+	balance, err := walletTx.Credit(ctx, user.ID, dc.amount)
 	if err != nil {
 		return 0, fmt.Errorf("failed to credit wallet: %w", err)
 	}

@@ -22,7 +22,7 @@ type DailyCommand struct {
 func NewDailyCommand(claimer DailyClaimer, log logger.Logger) *DailyCommand {
 	return &DailyCommand{
 		claimer: claimer,
-		log:     log,
+		log:     log.With("command", "!bet"),
 	}
 }
 
@@ -38,7 +38,7 @@ func (c *DailyCommand) Execute(ctx context.Context, p Payload, r Responder) erro
 
 	balance, err := c.claimer.Claim(ctx, p.UserID, p.User)
 	if errors.Is(err, reward.ErrAlreadyClaimed) {
-		return r.Say(fmt.Sprintf("@%s, на сегодня жижакоины уже получены! Заходи после 12:00 UTC+3.", p.User))
+		return r.Say(fmt.Sprintf("@%s, на сегодня жижа-коины уже получены! Заходи после 12:00 UTC+3.", p.User))
 	}
 
 	if err != nil {
@@ -46,5 +46,5 @@ func (c *DailyCommand) Execute(ctx context.Context, p Payload, r Responder) erro
 		return r.Say(fmt.Sprintf("@%s, что-то пошло не так, попробуй позже.", p.User))
 	}
 
-	return r.Say(fmt.Sprintf("@%s, получено +%d жижакоинов! Твой баланс: %d.", p.User, c.claimer.Amount(), balance))
+	return r.Say(fmt.Sprintf("@%s, получено +%d жижа-коинов! Твой баланс: %d.", p.User, c.claimer.Amount(), balance))
 }

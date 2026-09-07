@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"jijabot/internal/app"
+	"jijabot/internal/bet"
 	"jijabot/internal/commands"
 	"jijabot/internal/config"
 	"jijabot/internal/database"
 	"jijabot/internal/eventbus"
+	"jijabot/internal/gambling"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
 	"jijabot/internal/redeem"
@@ -21,11 +23,6 @@ import (
 	"jijabot/internal/twitchbot"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
-)
-
-const (
-	dailyJijaCoinAmount = 10
-	dailyResetHourUTC   = 12
 )
 
 func main() {
@@ -77,13 +74,25 @@ func main() {
 		users.NewSQLiteRepository(db),
 		redeem.NewSQLiteRepository(db),
 		wallet.NewSQLiteRepository(db),
-		dailyJijaCoinAmount,
-		dailyResetHourUTC,
+		cfg.JijaBot.Daily.JijaCoinAmount,
+		cfg.JijaBot.Daily.ResetHourUTC,
 	)
 
-	router := commands.NewRouter(bot, log.With(log, "component", "router"))
-	router.Register(commands.NewHiCommand(log.With(log, "component", "hi")))
-	router.Register(commands.NewDailyCommand(claimer, log.With(log, "component", "daily")))
+	betPlacer := gambling.NewBetPlacer(
+		db,
+		users.NewSQLiteRepository(db),
+		bet.NewSQLiteRepository(db),
+		wallet.NewSQLiteRepository(db),
+		cfg.JijaBot.Bet.BaseProbability,
+		cfg.JijaBot.Bet.PayoutMultiple,
+		cfg.JijaBot.Bet.DailyLimit,
+		cfg.JijaBot.Bet.ResetHourUTC,
+	)
+
+	router := commands.NewRouter(bot, log)
+	router.Register(commands.NewHiCommand(log))
+	router.Register(commands.NewDailyCommand(claimer, log))
+	router.Register(commands.NewBetCommand(betPlacer, log))
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 

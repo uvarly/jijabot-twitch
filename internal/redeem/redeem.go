@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"modernc.org/sqlite"
 	sqlitelib "modernc.org/sqlite/lib"
@@ -13,11 +12,6 @@ import (
 )
 
 var ErrAlreadyClaimed = errors.New("redeem: already claimed for this period")
-
-func PeriodKey(t time.Time, resetHour int) string {
-	shifted := t.UTC().Add(-time.Duration(resetHour) * time.Hour)
-	return shifted.Format("2006-01-02")
-}
 
 type Repository interface {
 	WithExecutor(executor store.Executor) Repository
@@ -43,9 +37,7 @@ func (r *SQLiteRepository) Claim(ctx context.Context, userID, amount int64, peri
 	`
 
 	if _, err := r.executor.ExecContext(ctx, query, userID, amount, period); err != nil {
-		var sqliteErr *sqlite.Error
-
-		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlitelib.SQLITE_CONSTRAINT_UNIQUE {
+		if isUniqueViolation(err) {
 			return ErrAlreadyClaimed
 		}
 
@@ -53,4 +45,12 @@ func (r *SQLiteRepository) Claim(ctx context.Context, userID, amount int64, peri
 	}
 
 	return nil
+}
+
+func isUniqueViolation(err error) bool {
+	if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
+		return sqliteErr.Code() == sqlitelib.SQLITE_CONSTRAINT_UNIQUE
+	}
+
+	return false
 }
