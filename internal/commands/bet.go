@@ -12,7 +12,7 @@ import (
 const (
 	phrasebookBet                          = "bet"
 	phrasebookBetInternalError             = "internal_error"
-	phrasebookBetInvalidAmountMissing      = "invalid_amount_missing"
+	phrasebookBetInvalidAmountMissingArgs  = "invalid_amount_missing_args"
 	phrasebookBetInvalidAmountNotInteger   = "invalid_amount_not_integer"
 	phrasebookBetInvalidAmountLessThanZero = "invalid_amount_less_than_zero"
 	phrasebookBetInsufficientFunds         = "insufficient_funds"
@@ -60,7 +60,7 @@ func (c *BetCommand) Execute(ctx context.Context, p Payload, r Responder) error 
 	}
 
 	if len(p.Args) != 1 {
-		return r.Say(c.pickError(ctx, phrasebookBetInvalidAmountMissing, p))
+		return r.Say(c.pickError(ctx, phrasebookBetInvalidAmountMissingArgs, p))
 	}
 
 	amount, err := strconv.ParseInt(p.Args[0], 10, 64)

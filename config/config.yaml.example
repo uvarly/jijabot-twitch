@@ -10,13 +10,20 @@ phrasebook:
     - daily.already_claimed
     - daily.success
     - bet.internal_error
-    - bet.invalid_amount_missing
+    - bet.invalid_amount_missing_args
     - bet.invalid_amount_not_integer
     - bet.invalid_amount_less_than_zero
     - bet.insufficient_funds
     - bet.daily_limit_reached
     - bet.win
     - bet.lose
+    - grant.internal_error
+    - grant.permission_denied
+    - grant.missing_args
+    - grant.invalid_amount_not_integer
+    - grant.invalid_amount_less_than_zero
+    - grant.target_user_not_found
+    - grant.success
 
 twitch_bot:
   username: "your_twitch_username"

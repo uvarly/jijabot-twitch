@@ -16,6 +16,7 @@ import (
 	"jijabot/internal/database"
 	"jijabot/internal/eventbus"
 	"jijabot/internal/gambling"
+	"jijabot/internal/grant"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
 	"jijabot/internal/phrasebook"
@@ -103,10 +104,17 @@ func main() {
 
 	phrasePicker := phrasebook.NewPicker(phraseBook)
 
+	granter := grant.NewGranter(
+		db,
+		users.NewSQLiteRepository(db),
+		wallet.NewSQLiteRepository(db),
+	)
+
 	router := commands.NewRouter(bot, log)
 	router.Register(commands.NewHiCommand(phrasePicker, log))
 	router.Register(commands.NewDailyCommand(claimer, phrasePicker, log))
 	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
+	router.Register(commands.NewGrantCommand(granter, phrasePicker, log))
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 

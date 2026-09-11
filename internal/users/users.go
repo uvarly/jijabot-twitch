@@ -2,6 +2,8 @@ package users
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +21,7 @@ type User struct {
 type Repository interface {
 	WithExecutor(executor store.Executor) Repository
 	GetOrCreate(ctx context.Context, twitchUserID, username string) (User, error)
+	GetByUsername(ctx context.Context, username string) (User, bool, error)
 }
 
 type SQLiteRepository struct {
@@ -52,4 +55,26 @@ func (r *SQLiteRepository) GetOrCreate(ctx context.Context, twitchUserID, userna
 	}
 
 	return user, nil
+}
+
+func (r *SQLiteRepository) GetByUsername(ctx context.Context, username string) (User, bool, error) {
+	const query = `
+		SELECT id, twitch_user_id, username, created_at, updated_at
+		FROM users
+		WHERE username = ?
+	`
+
+	var user User
+
+	err := r.executor.QueryRowContext(ctx, query, username).
+		Scan(&user.ID, &user.TwitchUserID, &user.Username, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, false, nil
+		}
+
+		return User{}, false, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return user, true, nil
 }

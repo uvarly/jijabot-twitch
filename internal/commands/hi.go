@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"strings"
 
 	"jijabot/internal/logger"
 )
@@ -36,7 +35,7 @@ func (c *HiCommand) Name() string {
 func (c *HiCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	scenario := phrasebookHiGreeting
 
-	if p.User == strings.ToLower(streamerNickname) {
+	if isStreamer(p.User) {
 		scenario = phrasebookHiGreetingStreamer
 	}
 

@@ -23,7 +23,7 @@ bet:
   internal_error: # required params: {{.User}}
     - text: "@{{.User}}, что-то пошло не так, попробуй позже."
       weight: 1.0
-  invalid_amount_missing: # required params: {{.User}}
+  invalid_amount_missing_args: # required params: {{.User}}
     - text: "@{{.User}}, укажи ставку. Пример: !bet 10."
       weight: 1.0
   invalid_amount_not_integer: # required params: {{.User}}
@@ -45,4 +45,27 @@ bet:
     - text: "@{{.User}}, не в этот раз. -{{.Payout}} жижа-коинов. Баланс: {{.NewBalance}}"
       weight: 1.0
     - text: "@{{.User}}, {{.Payout}} жижа-коинов улетели в трубу. Баланс: {{.NewBalance}}"
+      weight: 1.0
+
+grant:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  permission_denied: # required params: {{.User}}
+    - text: "@{{.User}}, эта команда доступна только стримеру."
+      weight: 1.0
+  missing_args: # required params: {{.User}}
+    - text: "@{{.User}}, укажи пользователя и сумму. Пример: !grant @user 10."
+      weight: 1.0
+  invalid_amount_not_integer: # required params: {{.User}}
+    - text: "@{{.User}}, сумма должна быть числом. Пример: !grant @user 10."
+      weight: 1.0
+  invalid_amount_less_than_zero: # required params: {{.User}}
+    - text: "@{{.User}}, сумма должна быть больше нуля. Пример: !grant @user 10."
+      weight: 1.0
+  target_user_not_found: # required params: {{.User}}
+    - text: "@{{.User}}, пользователь не найден."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.TargetUser}}, {{.Amount}}, {{.NewBalance}}
+    - text: "@{{.User}} начислил {{.Amount}} жижа-коинов пользователю @{{.TargetUser}}. Баланс: {{.NewBalance}}."
       weight: 1.0

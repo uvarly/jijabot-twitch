@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"jijabot/internal/logger"
 )
@@ -40,4 +41,8 @@ func pickPhraseOrFallback(ctx context.Context, log logger.Logger, phrasePicker P
 	}
 
 	return message
+}
+
+func isStreamer(user string) bool {
+	return user == strings.ToLower(strings.TrimPrefix(streamerNickname, "@"))
 }

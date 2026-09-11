@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrCommandNotFound  = errors.New("command not found")
-	ErrScenarioNotFound = errors.New("scenario not found")
+	ErrCommandNotFound  = errors.New("phrasebook: command not found")
+	ErrScenarioNotFound = errors.New("phrasebook: scenario not found")
 )
 
 type RNG interface {
