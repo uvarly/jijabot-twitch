@@ -69,10 +69,10 @@ func NewSlogLogger(options ...Option) *slogLogger {
 	var slogHandler slog.Handler
 
 	settings := &settings{
-		level:  slog.LevelInfo,
-		output: os.Stdout,
-		format: FormatJSON,
-		// addSource: false,
+		level:     slog.LevelInfo,
+		output:    os.Stdout,
+		format:    FormatJSON,
+		addSource: false,
 	}
 
 	for _, o := range options {

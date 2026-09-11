@@ -3,11 +3,27 @@ package commands
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"jijabot/internal/logger"
 	"jijabot/internal/reward"
 )
+
+const (
+	phrasebookDaily               = "daily"
+	phrasebookDailyInternalError  = "internal_error"
+	phrasebookDailyAlreadyClaimed = "already_claimed"
+	phrasebookDailySuccess        = "success"
+)
+
+type dailyErrorData struct {
+	User string
+}
+
+type dailySuccessData struct {
+	User    string
+	Amount  int64
+	Balance int64
+}
 
 type DailyClaimer interface {
 	Amount() int64
@@ -15,14 +31,16 @@ type DailyClaimer interface {
 }
 
 type DailyCommand struct {
-	claimer DailyClaimer
-	log     logger.Logger
+	claimer      DailyClaimer
+	phrasePicker PhrasePicker
+	log          logger.Logger
 }
 
-func NewDailyCommand(claimer DailyClaimer, log logger.Logger) *DailyCommand {
+func NewDailyCommand(claimer DailyClaimer, phrasePicker PhrasePicker, log logger.Logger) *DailyCommand {
 	return &DailyCommand{
-		claimer: claimer,
-		log:     log.With("command", "!bet"),
+		claimer:      claimer,
+		phrasePicker: phrasePicker,
+		log:          log.With("command", "!bet"),
 	}
 }
 
@@ -33,18 +51,28 @@ func (c *DailyCommand) Name() string {
 func (c *DailyCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	if p.UserID == "" {
 		c.log.ErrorContext(ctx, "daily claim attempted without a twitch user id", "user_id", p.UserID)
-		return r.Say(fmt.Sprintf("@%s, что-то пошло не так, попробуй позже.", p.User))
+		return r.Say(c.pickError(ctx, phrasebookDailyInternalError, p))
 	}
 
 	balance, err := c.claimer.Claim(ctx, p.UserID, p.User)
 	if errors.Is(err, reward.ErrAlreadyClaimed) {
-		return r.Say(fmt.Sprintf("@%s, на сегодня жижа-коины уже получены! Заходи после 12:00 UTC+3.", p.User))
+		return r.Say(c.pickError(ctx, phrasebookDailyAlreadyClaimed, p))
 	}
 
 	if err != nil {
 		c.log.ErrorContext(ctx, "failed to claim daily reward", "user_id", p.UserID, "error", err)
-		return r.Say(fmt.Sprintf("@%s, что-то пошло не так, попробуй позже.", p.User))
+		return r.Say(c.pickError(ctx, phrasebookDailyInternalError, p))
 	}
 
-	return r.Say(fmt.Sprintf("@%s, получено +%d жижа-коинов! Твой баланс: %d.", p.User, c.claimer.Amount(), balance))
+	data := dailySuccessData{
+		User:    p.User,
+		Amount:  c.claimer.Amount(),
+		Balance: balance,
+	}
+
+	return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDaily, phrasebookDailySuccess, p.User, data))
+}
+
+func (c *DailyCommand) pickError(ctx context.Context, scenario string, p Payload) string {
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDaily, scenario, p.User, dailyErrorData{User: p.User})
 }

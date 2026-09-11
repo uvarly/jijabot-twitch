@@ -11,14 +11,20 @@ import (
 const configPath = "config/config.yaml"
 
 type Config struct {
-	Database  DatabaseConfig  `yaml:"database"`
-	TwitchBot TwitchBotConfig `yaml:"twitch_bot"`
-	Oauth     OauthConfig     `yaml:"oauth"`
-	JijaBot   JijaBotConfig   `yaml:"jija_bot"`
+	Database   DatabaseConfig   `yaml:"database"`
+	Phrasebook PhrasebookConfig `yaml:"phrasebook"`
+	TwitchBot  TwitchBotConfig  `yaml:"twitch_bot"`
+	Oauth      OauthConfig      `yaml:"oauth"`
+	JijaBot    JijaBotConfig    `yaml:"jija_bot"`
 }
 
 type DatabaseConfig struct {
 	Path string `yaml:"path" validate:"required"`
+}
+
+type PhrasebookConfig struct {
+	Path            string   `yaml:"path" validate:"required"`
+	RequiredEntries []string `yaml:"required_entries" validate:"required"`
 }
 
 type TwitchBotConfig struct {

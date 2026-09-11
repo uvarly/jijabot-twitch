@@ -1,6 +1,23 @@
 database:
   path: "your_database_file_path"
 
+phrasebook:
+  path: "your_phrasebook_file_path"
+  required_entries:
+    - hi.greeting
+    - hi.streamer_greeting
+    - daily.internal_error
+    - daily.already_claimed
+    - daily.success
+    - bet.internal_error
+    - bet.invalid_amount_missing
+    - bet.invalid_amount_not_integer
+    - bet.invalid_amount_less_than_zero
+    - bet.insufficient_funds
+    - bet.daily_limit_reached
+    - bet.win
+    - bet.lose
+
 twitch_bot:
   username: "your_twitch_username"
   channel: "your_twitch_channel_name"
@@ -19,4 +36,3 @@ jija_bot:
     payout_multiple: 2.0
     daily_limit: 5
     reset_hour_utc: 12
-

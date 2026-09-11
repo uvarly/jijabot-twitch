@@ -18,6 +18,7 @@ import (
 	"jijabot/internal/gambling"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
+	"jijabot/internal/phrasebook"
 	"jijabot/internal/redeem"
 	"jijabot/internal/reward"
 	"jijabot/internal/twitchbot"
@@ -29,7 +30,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat())
+	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Error("failed to load config", "error", err)
@@ -89,10 +90,23 @@ func main() {
 		cfg.JijaBot.Bet.ResetHourUTC,
 	)
 
+	phraseBook, err := phrasebook.NewPhrasebook(cfg.Phrasebook.Path)
+	if err != nil {
+		log.Error("failed to load phrasebook", "error", err)
+		return
+	}
+
+	if err := phraseBook.ValidateEntries(cfg.Phrasebook.RequiredEntries...); err != nil {
+		log.Error("failed to validate phrasebook", "error", err)
+		return
+	}
+
+	phrasePicker := phrasebook.NewPicker(phraseBook)
+
 	router := commands.NewRouter(bot, log)
-	router.Register(commands.NewHiCommand(log))
-	router.Register(commands.NewDailyCommand(claimer, log))
-	router.Register(commands.NewBetCommand(betPlacer, log))
+	router.Register(commands.NewHiCommand(phrasePicker, log))
+	router.Register(commands.NewDailyCommand(claimer, phrasePicker, log))
+	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 

@@ -1,0 +1,48 @@
+hi:
+  greeting: # required params: {{.User}}
+    - text: "Привет, @{{.User}}!"
+      weight: 2.0
+    - text: "Здарова, @{{.User}}!"
+      weight: 1.0
+  streamer_greeting:
+    - text: "Приветствую, Владыка!"
+      weight: 1.0
+
+daily:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  already_claimed: # required params: {{.User}}, {{.ResetHour}}
+    - text: "@{{.User}}, на сегодня жижа-коины уже получены! Заходи после {{.ResetHour}} UTC+3."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.Amount}}, {{.Balance}}
+    - text: "@{{.User}}, получено +{{.Amount}} жижа-коинов! Твой баланс: {{.Balance}}."
+      weight: 1.0
+
+bet:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  invalid_amount_missing: # required params: {{.User}}
+    - text: "@{{.User}}, укажи ставку. Пример: !bet 10."
+      weight: 1.0
+  invalid_amount_not_integer: # required params: {{.User}}
+    - text: "@{{.User}}, ставка должна быть числом. Пример: !bet 10."
+      weight: 1.0
+  invalid_amount_less_than_zero: # required params: {{.User}}
+    - text: "@{{.User}}, ставка должна быть больше нуля. Пример: !bet 10."
+      weight: 1.0
+  insufficient_funds: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя недостаточно жижа-коинов для такой ставки."
+      weight: 1.0
+  daily_limit_reached: # required params: {{.User}}
+    - text: "@{{.User}}, на сегодня лимит ставок исчерпан."
+      weight: 1.0
+  win: # required params: {{.User}}, {{.Payout}}, {{.NewBalance}}
+    - text: "@{{.User}}, поздравляю! Твой выигрыш: {{.Payout}} жижа-коинов! Баланс: {{.NewBalance}}"
+      weight: 1.0
+  lose: # required params: {{.User}}, {{.Payout}}, {{.NewBalance}}
+    - text: "@{{.User}}, не в этот раз. -{{.Payout}} жижа-коинов. Баланс: {{.NewBalance}}"
+      weight: 1.0
+    - text: "@{{.User}}, {{.Payout}} жижа-коинов улетели в трубу. Баланс: {{.NewBalance}}"
+      weight: 1.0
