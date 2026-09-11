@@ -55,10 +55,10 @@ func (c *GrantCommand) Name() string {
 }
 
 func (c *GrantCommand) Execute(ctx context.Context, p Payload, r Responder) error {
-	// if !isStreamer(p.User) {
-	// 	c.log.InfoContext(ctx, "grant command attempted by a non-streamer user", "user", p.User)
-	// 	return r.Say(c.pickError(ctx, phrasebookGrantPermissionDenied, p))
-	// }
+	if !isStreamer(p.User) {
+		c.log.InfoContext(ctx, "grant command attempted by a non-streamer user", "user", p.User)
+		return r.Say(c.pickError(ctx, phrasebookGrantPermissionDenied, p))
+	}
 
 	if len(p.Args) != 2 {
 		return r.Say(c.pickError(ctx, phrasebookGrantMissingArgs, p))
