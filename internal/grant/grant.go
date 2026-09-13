@@ -23,23 +23,25 @@ type Result struct {
 type Granter struct {
 	txBeginner store.TxBeginner
 	users      users.Repository
+	grant      GrantRepository
 	wallet     wallet.Repository
 }
 
 func NewGranter(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	// grantRepository Repository,
+	grantRepository GrantRepository,
 	walletRepository wallet.Repository,
 ) *Granter {
 	return &Granter{
 		txBeginner: txBeginner,
 		users:      userRepository,
+		grant:      grantRepository,
 		wallet:     walletRepository,
 	}
 }
 
-func (g *Granter) Grant(ctx context.Context, username string, amount int64) (Result, error) {
+func (g *Granter) Grant(ctx context.Context, granterName, granteeName string, amount int64) (Result, error) {
 	if amount <= 0 {
 		return Result{}, ErrInvalidAmount
 	}
@@ -51,18 +53,32 @@ func (g *Granter) Grant(ctx context.Context, username string, amount int64) (Res
 	defer tx.Rollback()
 
 	userTx := g.users.WithExecutor(tx)
+	grantTx := g.grant.WithExecutor(tx)
 	walletTx := g.wallet.WithExecutor(tx)
 
-	user, found, err := userTx.GetByUsername(ctx, username)
+	granter, found, err := userTx.GetByUsername(ctx, granterName)
 	if err != nil {
-		return Result{}, fmt.Errorf("failed to get user: %w", err)
+		return Result{}, fmt.Errorf("failed to get granter: %w", err)
 	}
 
 	if !found {
 		return Result{}, ErrUserNotFound
 	}
 
-	newBalance, err := walletTx.Credit(ctx, user.ID, amount)
+	grantee, found, err := userTx.GetByUsername(ctx, granteeName)
+	if err != nil {
+		return Result{}, fmt.Errorf("failed to get grantee: %w", err)
+	}
+
+	if !found {
+		return Result{}, ErrUserNotFound
+	}
+
+	if err := grantTx.Record(ctx, granter.ID, grantee.ID, amount); err != nil {
+		return Result{}, fmt.Errorf("failed to record grant: %w", err)
+	}
+
+	newBalance, err := walletTx.Credit(ctx, grantee.ID, amount)
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to credit wallet: %w", err)
 	}
@@ -72,7 +88,7 @@ func (g *Granter) Grant(ctx context.Context, username string, amount int64) (Res
 	}
 
 	return Result{
-		TargetUser: username,
+		TargetUser: grantee.Username,
 		NewBalance: newBalance,
 	}, nil
 }

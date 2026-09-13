@@ -83,7 +83,7 @@ func (dc *DailyRedeemer) Redeem(ctx context.Context, twitchUserID, username stri
 
 	period := dailywindow.Key(dc.clock.Now(), dc.resetHour)
 
-	if err := redeemTx.Redeem(ctx, user.ID, dc.amount, period); err != nil {
+	if err := redeemTx.Record(ctx, user.ID, dc.amount, period); err != nil {
 		if errors.Is(err, ErrAlreadyRedeemed) {
 			return 0, ErrAlreadyRedeemed
 		}

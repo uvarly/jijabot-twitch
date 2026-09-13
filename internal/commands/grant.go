@@ -33,7 +33,7 @@ type grantSuccessData struct {
 }
 
 type Granter interface {
-	Grant(ctx context.Context, username string, amount int64) (grant.Result, error)
+	Grant(ctx context.Context, granterName, granteeName string, amount int64) (grant.Result, error)
 }
 
 type GrantCommand struct {
@@ -74,7 +74,7 @@ func (c *GrantCommand) Execute(ctx context.Context, p Payload, r Responder) erro
 		return r.Say(c.pickError(ctx, phrasebookGrantInvalidAmountNotInteger, p))
 	}
 
-	result, err := c.granter.Grant(ctx, targetUser, amount)
+	result, err := c.granter.Grant(ctx, p.User, targetUser, amount)
 
 	switch {
 	case errors.Is(err, grant.ErrInvalidAmount):

@@ -29,8 +29,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
-	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelInfo), logger.WithTextFormat())
+	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
+	// log := logger.NewSlogLogger(logger.WithLevel(slog.LevelInfo), logger.WithTextFormat())
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Error("failed to load config", "error", err)
@@ -106,6 +106,7 @@ func main() {
 	granter := grant.NewGranter(
 		db,
 		users.NewSQLiteRepository(db),
+		grant.NewSQLiteGrantRepository(db),
 		wallet.NewSQLiteRepository(db),
 	)
 

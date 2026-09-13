@@ -15,7 +15,7 @@ var ErrAlreadyRedeemed = errors.New("reward: already redeemed for this period")
 
 type RedeemRepository interface {
 	WithExecutor(executor store.Executor) RedeemRepository
-	Redeem(ctx context.Context, userID, amount int64, period string) error
+	Record(ctx context.Context, userID, amount int64, period string) error
 }
 
 type SQLiteRedeemRepository struct {
@@ -30,7 +30,7 @@ func (r *SQLiteRedeemRepository) WithExecutor(executor store.Executor) RedeemRep
 	return &SQLiteRedeemRepository{executor: executor}
 }
 
-func (r *SQLiteRedeemRepository) Redeem(ctx context.Context, userID, amount int64, period string) error {
+func (r *SQLiteRedeemRepository) Record(ctx context.Context, userID, amount int64, period string) error {
 	const query = `
 		INSERT INTO jija_coin_redeem_history (user_id, amount, redeem_period)
 		VALUES (?, ?, ?)
