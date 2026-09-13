@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const configPath = "config/config.yaml"
+const configPath = "./config/config.yaml"
 
 type Config struct {
 	Database   DatabaseConfig   `yaml:"database"`

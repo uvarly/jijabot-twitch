@@ -8,6 +8,7 @@ import (
 
 const (
 	phrasebookHi                 = "hi"
+	phrasebookHiInternalError    = "internal_error"
 	phrasebookHiGreeting         = "greeting"
 	phrasebookHiGreetingStreamer = "greeting_streamer"
 )
@@ -33,6 +34,11 @@ func (c *HiCommand) Name() string {
 }
 
 func (c *HiCommand) Execute(ctx context.Context, p Payload, r Responder) error {
+	if p.UserID == "" {
+		c.log.ErrorContext(ctx, "hi attempted without a twitch user id", "user_id", p.UserID)
+		return r.Say(c.pickError(ctx, phrasebookHiInternalError, p))
+	}
+
 	scenario := phrasebookHiGreeting
 
 	if isStreamer(p.User) {
@@ -43,4 +49,8 @@ func (c *HiCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	response := pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookHi, scenario, p.User, data)
 
 	return r.Say(response)
+}
+
+func (c *HiCommand) pickError(ctx context.Context, scenario string, p Payload) string {
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookHiInternalError, scenario, p.User, dailyErrorData{User: p.User})
 }

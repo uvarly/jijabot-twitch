@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"jijabot/internal/store"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
@@ -28,6 +29,7 @@ type Granter struct {
 func NewGranter(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
+	// grantRepository grants.Repository,
 	walletRepository wallet.Repository,
 ) *Granter {
 	return &Granter{

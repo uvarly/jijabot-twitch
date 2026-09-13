@@ -7,13 +7,10 @@ import (
 	"time"
 
 	"jijabot/internal/dailywindow"
-	"jijabot/internal/redeem"
 	"jijabot/internal/store"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
 )
-
-var ErrAlreadyClaimed = redeem.ErrAlreadyClaimed
 
 type Clock interface {
 	Now() time.Time
@@ -23,16 +20,16 @@ type RealClock struct{}
 
 func (RealClock) Now() time.Time { return time.Now() }
 
-type Option func(*DailyClaimer)
+type Option func(*DailyRedeemer)
 
 func WithClock(clock Clock) Option {
-	return func(dc *DailyClaimer) { dc.clock = clock }
+	return func(dc *DailyRedeemer) { dc.clock = clock }
 }
 
-type DailyClaimer struct {
+type DailyRedeemer struct {
 	txBeginner store.TxBeginner
 	users      users.Repository
-	redeem     redeem.Repository
+	redeem     Repository
 	wallet     wallet.Repository
 	clock      Clock
 
@@ -43,13 +40,13 @@ type DailyClaimer struct {
 func NewDailyClaimer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	redeemRepository redeem.Repository,
+	redeemRepository Repository,
 	walletRepository wallet.Repository,
 	amount int64,
 	resetHour int,
 	options ...Option,
-) *DailyClaimer {
-	dailyClaimer := &DailyClaimer{
+) *DailyRedeemer {
+	dailyClaimer := &DailyRedeemer{
 		txBeginner: txBeginner,
 		users:      userRepository,
 		redeem:     redeemRepository,
@@ -66,9 +63,9 @@ func NewDailyClaimer(
 	return dailyClaimer
 }
 
-func (dc *DailyClaimer) Amount() int64 { return dc.amount }
+func (dc *DailyRedeemer) Amount() int64 { return dc.amount }
 
-func (dc *DailyClaimer) Claim(ctx context.Context, twitchUserID, username string) (int64, error) {
+func (dc *DailyRedeemer) Claim(ctx context.Context, twitchUserID, username string) (int64, error) {
 	tx, err := dc.txBeginner.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to begin transaction: %w", err)
@@ -86,8 +83,8 @@ func (dc *DailyClaimer) Claim(ctx context.Context, twitchUserID, username string
 
 	period := dailywindow.Key(dc.clock.Now(), dc.resetHour)
 
-	if err := redeemTx.Claim(ctx, user.ID, dc.amount, period); err != nil {
-		if errors.Is(err, redeem.ErrAlreadyClaimed) {
+	if err := redeemTx.Redeem(ctx, user.ID, dc.amount, period); err != nil {
+		if errors.Is(err, ErrAlreadyClaimed) {
 			return 0, ErrAlreadyClaimed
 		}
 

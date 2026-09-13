@@ -1,4 +1,4 @@
-package redeem
+package reward
 
 import (
 	"context"
@@ -15,7 +15,7 @@ var ErrAlreadyClaimed = errors.New("redeem: already claimed for this period")
 
 type Repository interface {
 	WithExecutor(executor store.Executor) Repository
-	Claim(ctx context.Context, userID, amount int64, period string) error
+	Redeem(ctx context.Context, userID, amount int64, period string) error
 }
 
 type SQLiteRepository struct {
@@ -30,7 +30,7 @@ func (r *SQLiteRepository) WithExecutor(executor store.Executor) Repository {
 	return &SQLiteRepository{executor: executor}
 }
 
-func (r *SQLiteRepository) Claim(ctx context.Context, userID, amount int64, period string) error {
+func (r *SQLiteRepository) Redeem(ctx context.Context, userID, amount int64, period string) error {
 	const query = `
 		INSERT INTO jija_coin_redeem_history (user_id, amount, redeem_period)
 		VALUES (?, ?, ?)

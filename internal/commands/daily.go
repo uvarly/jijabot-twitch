@@ -25,18 +25,18 @@ type dailySuccessData struct {
 	Balance int64
 }
 
-type DailyClaimer interface {
+type DailyRedeemer interface {
 	Amount() int64
 	Claim(ctx context.Context, twitchUserID, username string) (int64, error)
 }
 
 type DailyCommand struct {
-	claimer      DailyClaimer
+	claimer      DailyRedeemer
 	phrasePicker PhrasePicker
 	log          logger.Logger
 }
 
-func NewDailyCommand(claimer DailyClaimer, phrasePicker PhrasePicker, log logger.Logger) *DailyCommand {
+func NewDailyCommand(claimer DailyRedeemer, phrasePicker PhrasePicker, log logger.Logger) *DailyCommand {
 	return &DailyCommand{
 		claimer:      claimer,
 		phrasePicker: phrasePicker,

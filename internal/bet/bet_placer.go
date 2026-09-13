@@ -1,4 +1,4 @@
-package gambling
+package bet
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"jijabot/internal/bet"
 	"jijabot/internal/dailywindow"
 	"jijabot/internal/store"
 	"jijabot/internal/users"
@@ -72,7 +71,7 @@ type BetPlacer struct {
 	txBeginner     store.TxBeginner
 	users          users.Repository
 	wallet         wallet.Repository
-	bets           bet.Repository
+	bets           Repository
 	oddsCalculator OddsCalculator
 	rng            RNG
 	clock          Clock
@@ -86,7 +85,7 @@ type BetPlacer struct {
 func NewBetPlacer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	betRepository bet.Repository,
+	betRepository Repository,
 	walletRepository wallet.Repository,
 	baseProbability float64,
 	payoutMultiple float64,
@@ -179,7 +178,7 @@ func (bp *BetPlacer) Place(ctx context.Context, twitchUserID, username string, a
 		return Result{}, fmt.Errorf("failed to settle bet: %w", err)
 	}
 
-	if err := betTx.Record(ctx, bet.Bet{
+	if err := betTx.Record(ctx, Bet{
 		UserID:      user.ID,
 		Amount:      amount,
 		Probability: probability,

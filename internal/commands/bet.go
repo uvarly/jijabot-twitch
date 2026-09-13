@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"jijabot/internal/gambling"
+	"jijabot/internal/bet"
 	"jijabot/internal/logger"
 )
 
@@ -32,7 +32,7 @@ type betResultData struct {
 }
 
 type BetPlacer interface {
-	Place(ctx context.Context, twitchUserID, username string, amount int64) (gambling.Result, error)
+	Place(ctx context.Context, twitchUserID, username string, amount int64) (bet.Result, error)
 }
 
 type BetCommand struct {
@@ -70,11 +70,11 @@ func (c *BetCommand) Execute(ctx context.Context, p Payload, r Responder) error 
 
 	result, err := c.betPlacer.Place(ctx, p.UserID, p.User, amount)
 	switch {
-	case errors.Is(err, gambling.ErrDailyLimitReached):
+	case errors.Is(err, bet.ErrDailyLimitReached):
 		return r.Say(c.pickError(ctx, phrasebookBetDailyLimitReached, p))
-	case errors.Is(err, gambling.ErrInsufficientFunds):
+	case errors.Is(err, bet.ErrInsufficientFunds):
 		return r.Say(c.pickError(ctx, phrasebookBetInsufficientFunds, p))
-	case errors.Is(err, gambling.ErrInvalidAmount):
+	case errors.Is(err, bet.ErrInvalidAmount):
 		return r.Say(c.pickError(ctx, phrasebookBetInvalidAmountLessThanZero, p))
 	case err != nil:
 		c.log.ErrorContext(ctx, "failed to place bet", "user", p.User, "amount", amount, "error", err)

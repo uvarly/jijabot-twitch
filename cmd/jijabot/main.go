@@ -15,12 +15,10 @@ import (
 	"jijabot/internal/config"
 	"jijabot/internal/database"
 	"jijabot/internal/eventbus"
-	"jijabot/internal/gambling"
 	"jijabot/internal/grant"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
 	"jijabot/internal/phrasebook"
-	"jijabot/internal/redeem"
 	"jijabot/internal/reward"
 	"jijabot/internal/twitchbot"
 	"jijabot/internal/users"
@@ -31,7 +29,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
+	// log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
+	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelInfo), logger.WithTextFormat())
 	cfg, err := config.NewConfig()
 	if err != nil {
 		log.Error("failed to load config", "error", err)
@@ -74,13 +73,13 @@ func main() {
 	claimer := reward.NewDailyClaimer(
 		db,
 		users.NewSQLiteRepository(db),
-		redeem.NewSQLiteRepository(db),
+		reward.NewSQLiteRepository(db),
 		wallet.NewSQLiteRepository(db),
 		cfg.JijaBot.Daily.JijaCoinAmount,
 		cfg.JijaBot.Daily.ResetHourUTC,
 	)
 
-	betPlacer := gambling.NewBetPlacer(
+	betPlacer := bet.NewBetPlacer(
 		db,
 		users.NewSQLiteRepository(db),
 		bet.NewSQLiteRepository(db),

@@ -4,8 +4,9 @@ database:
 phrasebook:
   path: "your_phrasebook_file_path"
   required_entries:
+    - hi.internal_error
     - hi.greeting
-    - hi.streamer_greeting
+    - hi.greeting_streamer
     - daily.internal_error
     - daily.already_claimed
     - daily.success
