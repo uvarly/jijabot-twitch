@@ -8,7 +8,7 @@ phrasebook:
     - hi.greeting
     - hi.greeting_streamer
     - daily.internal_error
-    - daily.already_claimed
+    - daily.already_redeemed
     - daily.success
     - bet.internal_error
     - bet.invalid_amount_missing_args

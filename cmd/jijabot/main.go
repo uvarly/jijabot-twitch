@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"jijabot/internal/app"
-	"jijabot/internal/bet"
 	"jijabot/internal/commands"
 	"jijabot/internal/config"
 	"jijabot/internal/database"
 	"jijabot/internal/eventbus"
+	"jijabot/internal/gambling"
 	"jijabot/internal/grant"
 	"jijabot/internal/logger"
 	"jijabot/internal/oauth"
@@ -70,19 +70,19 @@ func main() {
 		return
 	}
 
-	claimer := reward.NewDailyClaimer(
+	redeemer := reward.NewDailyRedeemer(
 		db,
 		users.NewSQLiteRepository(db),
-		reward.NewSQLiteRepository(db),
+		reward.NewSQLiteRedeemRepository(db),
 		wallet.NewSQLiteRepository(db),
 		cfg.JijaBot.Daily.JijaCoinAmount,
 		cfg.JijaBot.Daily.ResetHourUTC,
 	)
 
-	betPlacer := bet.NewBetPlacer(
+	betPlacer := gambling.NewBetPlacer(
 		db,
 		users.NewSQLiteRepository(db),
-		bet.NewSQLiteRepository(db),
+		gambling.NewSQLiteBetRepository(db),
 		wallet.NewSQLiteRepository(db),
 		cfg.JijaBot.Bet.BaseProbability,
 		cfg.JijaBot.Bet.PayoutMultiple,
@@ -111,7 +111,7 @@ func main() {
 
 	router := commands.NewRouter(bot, log)
 	router.Register(commands.NewHiCommand(phrasePicker, log))
-	router.Register(commands.NewDailyCommand(claimer, phrasePicker, log))
+	router.Register(commands.NewDailyCommand(redeemer, phrasePicker, log))
 	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
 	router.Register(commands.NewGrantCommand(granter, phrasePicker, log))
 

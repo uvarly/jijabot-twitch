@@ -1,4 +1,4 @@
-package bet
+package gambling
 
 import (
 	"context"
@@ -71,7 +71,7 @@ type BetPlacer struct {
 	txBeginner     store.TxBeginner
 	users          users.Repository
 	wallet         wallet.Repository
-	bets           Repository
+	bets           BetRepository
 	oddsCalculator OddsCalculator
 	rng            RNG
 	clock          Clock
@@ -85,7 +85,7 @@ type BetPlacer struct {
 func NewBetPlacer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	betRepository Repository,
+	betRepository BetRepository,
 	walletRepository wallet.Repository,
 	baseProbability float64,
 	payoutMultiple float64,

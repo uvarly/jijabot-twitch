@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	phrasebookDaily               = "daily"
-	phrasebookDailyInternalError  = "internal_error"
-	phrasebookDailyAlreadyClaimed = "already_claimed"
-	phrasebookDailySuccess        = "success"
+	phrasebookDaily                = "daily"
+	phrasebookDailyInternalError   = "internal_error"
+	phrasebookDailyAlreadyRedeemed = "already_redeemed"
+	phrasebookDailySuccess         = "success"
 )
 
 type dailyErrorData struct {
@@ -27,18 +27,18 @@ type dailySuccessData struct {
 
 type DailyRedeemer interface {
 	Amount() int64
-	Claim(ctx context.Context, twitchUserID, username string) (int64, error)
+	Redeem(ctx context.Context, twitchUserID, username string) (int64, error)
 }
 
 type DailyCommand struct {
-	claimer      DailyRedeemer
+	redeemer     DailyRedeemer
 	phrasePicker PhrasePicker
 	log          logger.Logger
 }
 
-func NewDailyCommand(claimer DailyRedeemer, phrasePicker PhrasePicker, log logger.Logger) *DailyCommand {
+func NewDailyCommand(redeemer DailyRedeemer, phrasePicker PhrasePicker, log logger.Logger) *DailyCommand {
 	return &DailyCommand{
-		claimer:      claimer,
+		redeemer:     redeemer,
 		phrasePicker: phrasePicker,
 		log:          log.With("command", "!bet"),
 	}
@@ -50,23 +50,23 @@ func (c *DailyCommand) Name() string {
 
 func (c *DailyCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	if p.UserID == "" {
-		c.log.ErrorContext(ctx, "daily claim attempted without a twitch user id", "user_id", p.UserID)
+		c.log.ErrorContext(ctx, "daily redeem attempted without a twitch user id", "user_id", p.UserID)
 		return r.Say(c.pickError(ctx, phrasebookDailyInternalError, p))
 	}
 
-	balance, err := c.claimer.Claim(ctx, p.UserID, p.User)
-	if errors.Is(err, reward.ErrAlreadyClaimed) {
-		return r.Say(c.pickError(ctx, phrasebookDailyAlreadyClaimed, p))
+	balance, err := c.redeemer.Redeem(ctx, p.UserID, p.User)
+	if errors.Is(err, reward.ErrAlreadyRedeemed) {
+		return r.Say(c.pickError(ctx, phrasebookDailyAlreadyRedeemed, p))
 	}
 
 	if err != nil {
-		c.log.ErrorContext(ctx, "failed to claim daily reward", "user_id", p.UserID, "error", err)
+		c.log.ErrorContext(ctx, "failed to redeem daily reward", "user_id", p.UserID, "error", err)
 		return r.Say(c.pickError(ctx, phrasebookDailyInternalError, p))
 	}
 
 	data := dailySuccessData{
 		User:    p.User,
-		Amount:  c.claimer.Amount(),
+		Amount:  c.redeemer.Amount(),
 		Balance: balance,
 	}
 

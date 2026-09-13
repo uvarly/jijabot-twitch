@@ -11,26 +11,26 @@ import (
 	"jijabot/internal/store"
 )
 
-var ErrAlreadyClaimed = errors.New("redeem: already claimed for this period")
+var ErrAlreadyRedeemed = errors.New("redeem: already redeemed for this period")
 
-type Repository interface {
-	WithExecutor(executor store.Executor) Repository
+type RedeemRepository interface {
+	WithExecutor(executor store.Executor) RedeemRepository
 	Redeem(ctx context.Context, userID, amount int64, period string) error
 }
 
-type SQLiteRepository struct {
+type SQLiteRedeemRepository struct {
 	executor store.Executor
 }
 
-func NewSQLiteRepository(executor store.Executor) *SQLiteRepository {
-	return &SQLiteRepository{executor: executor}
+func NewSQLiteRedeemRepository(executor store.Executor) *SQLiteRedeemRepository {
+	return &SQLiteRedeemRepository{executor: executor}
 }
 
-func (r *SQLiteRepository) WithExecutor(executor store.Executor) Repository {
-	return &SQLiteRepository{executor: executor}
+func (r *SQLiteRedeemRepository) WithExecutor(executor store.Executor) RedeemRepository {
+	return &SQLiteRedeemRepository{executor: executor}
 }
 
-func (r *SQLiteRepository) Redeem(ctx context.Context, userID, amount int64, period string) error {
+func (r *SQLiteRedeemRepository) Redeem(ctx context.Context, userID, amount int64, period string) error {
 	const query = `
 		INSERT INTO jija_coin_redeem_history (user_id, amount, redeem_period)
 		VALUES (?, ?, ?)
@@ -38,10 +38,10 @@ func (r *SQLiteRepository) Redeem(ctx context.Context, userID, amount int64, per
 
 	if _, err := r.executor.ExecContext(ctx, query, userID, amount, period); err != nil {
 		if isUniqueViolation(err) {
-			return ErrAlreadyClaimed
+			return ErrAlreadyRedeemed
 		}
 
-		return fmt.Errorf("failed to record claim: %w", err)
+		return fmt.Errorf("failed to record redeem: %w", err)
 	}
 
 	return nil

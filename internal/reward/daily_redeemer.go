@@ -29,7 +29,7 @@ func WithClock(clock Clock) Option {
 type DailyRedeemer struct {
 	txBeginner store.TxBeginner
 	users      users.Repository
-	redeem     Repository
+	redeem     RedeemRepository
 	wallet     wallet.Repository
 	clock      Clock
 
@@ -37,16 +37,16 @@ type DailyRedeemer struct {
 	resetHour int
 }
 
-func NewDailyClaimer(
+func NewDailyRedeemer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	redeemRepository Repository,
+	redeemRepository RedeemRepository,
 	walletRepository wallet.Repository,
 	amount int64,
 	resetHour int,
 	options ...Option,
 ) *DailyRedeemer {
-	dailyClaimer := &DailyRedeemer{
+	dailyRedeemer := &DailyRedeemer{
 		txBeginner: txBeginner,
 		users:      userRepository,
 		redeem:     redeemRepository,
@@ -57,15 +57,15 @@ func NewDailyClaimer(
 	}
 
 	for _, o := range options {
-		o(dailyClaimer)
+		o(dailyRedeemer)
 	}
 
-	return dailyClaimer
+	return dailyRedeemer
 }
 
 func (dc *DailyRedeemer) Amount() int64 { return dc.amount }
 
-func (dc *DailyRedeemer) Claim(ctx context.Context, twitchUserID, username string) (int64, error) {
+func (dc *DailyRedeemer) Redeem(ctx context.Context, twitchUserID, username string) (int64, error) {
 	tx, err := dc.txBeginner.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to begin transaction: %w", err)
@@ -84,11 +84,11 @@ func (dc *DailyRedeemer) Claim(ctx context.Context, twitchUserID, username strin
 	period := dailywindow.Key(dc.clock.Now(), dc.resetHour)
 
 	if err := redeemTx.Redeem(ctx, user.ID, dc.amount, period); err != nil {
-		if errors.Is(err, ErrAlreadyClaimed) {
-			return 0, ErrAlreadyClaimed
+		if errors.Is(err, ErrAlreadyRedeemed) {
+			return 0, ErrAlreadyRedeemed
 		}
 
-		return 0, fmt.Errorf("failed to record claim: %w", err)
+		return 0, fmt.Errorf("failed to record redeem: %w", err)
 	}
 
 	balance, err := walletTx.Credit(ctx, user.ID, dc.amount)

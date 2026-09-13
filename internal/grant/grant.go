@@ -29,7 +29,7 @@ type Granter struct {
 func NewGranter(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	// grantRepository grants.Repository,
+	// grantRepository Repository,
 	walletRepository wallet.Repository,
 ) *Granter {
 	return &Granter{

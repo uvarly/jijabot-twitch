@@ -15,7 +15,7 @@ daily:
   internal_error: # required params: {{.User}}
     - text: "@{{.User}}, что-то пошло не так, попробуй позже."
       weight: 1.0
-  already_claimed: # required params: {{.User}}, {{.ResetHour}}
+  already_redeemed: # required params: {{.User}}, {{.ResetHour}}
     - text: "@{{.User}}, на сегодня жижа-коины уже получены! Заходи после {{.ResetHour}} UTC+3."
       weight: 1.0
   success: # required params: {{.User}}, {{.Amount}}, {{.Balance}}
