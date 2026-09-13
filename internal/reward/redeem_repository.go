@@ -11,7 +11,7 @@ import (
 	"jijabot/internal/store"
 )
 
-var ErrAlreadyRedeemed = errors.New("redeem: already redeemed for this period")
+var ErrAlreadyRedeemed = errors.New("reward: already redeemed for this period")
 
 type RedeemRepository interface {
 	WithExecutor(executor store.Executor) RedeemRepository
