@@ -70,6 +70,12 @@ func main() {
 		return
 	}
 
+	balanceGetter := wallet.NewBalanceGetter(
+		db,
+		users.NewSQLiteRepository(db),
+		wallet.NewSQLiteRepository(db),
+	)
+
 	redeemer := reward.NewDailyRedeemer(
 		db,
 		users.NewSQLiteRepository(db),
@@ -112,6 +118,7 @@ func main() {
 
 	router := commands.NewRouter(bot, log)
 	router.Register(commands.NewHiCommand(phrasePicker, log))
+	router.Register(commands.NewBalanceCommand(balanceGetter, phrasePicker, log))
 	router.Register(commands.NewDailyCommand(redeemer, phrasePicker, log))
 	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
 	router.Register(commands.NewGrantCommand(granter, phrasePicker, log))

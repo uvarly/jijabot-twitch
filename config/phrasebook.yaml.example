@@ -11,6 +11,14 @@ hi:
     - text: "Приветствую, Владыка!"
       weight: 1.0
 
+balance:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.Balance}}
+    - text: "@{{.User}}, твой баланс: {{.Balance}} жижа-коинов."
+      weight: 1.0
+
 daily:
   internal_error: # required params: {{.User}}
     - text: "@{{.User}}, что-то пошло не так, попробуй позже."

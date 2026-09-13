@@ -7,6 +7,8 @@ phrasebook:
     - hi.internal_error
     - hi.greeting
     - hi.greeting_streamer
+    - balance.internal_error
+    - balance.success
     - daily.internal_error
     - daily.already_redeemed
     - daily.success

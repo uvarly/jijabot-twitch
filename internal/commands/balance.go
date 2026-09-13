@@ -8,15 +8,20 @@ import (
 const (
 	phrasebookBalance              = "balance"
 	phrasebookBalanceInternalError = "internal_error"
+	phrasebookBalanceSuccess       = "success"
 )
 
-type balanceData struct {
+type balanceErrorData struct {
+	User string
+}
+
+type balanceResultData struct {
 	User    string
 	Balance int64
 }
 
 type BalanceGetter interface {
-	Get(ctx context.Context, twitchUserID string) (int64, error)
+	Get(ctx context.Context, twitchUserID, username string) (int64, error)
 }
 
 type BalanceCommand struct {
@@ -43,20 +48,20 @@ func (c *BalanceCommand) Execute(ctx context.Context, p Payload, r Responder) er
 		return r.Say(c.pickError(ctx, phrasebookBalanceInternalError, p))
 	}
 
-	// balance, err := c.balanceGetter.Get(ctx, p.UserID)
-	// if err != nil {
-	// 	c.log.ErrorContext(ctx, "failed to get balance", "user_id", p.UserID, "error", err)
-	// 	return r.Say(c.pickError(ctx, phrasebookBalanceInternalError, p))
-	// }
+	balance, err := c.balanceGetter.Get(ctx, p.UserID, p.User)
+	if err != nil {
+		c.log.ErrorContext(ctx, "failed to get balance", "user", p.User, "error", err)
+		return r.Say(c.pickError(ctx, phrasebookBalanceInternalError, p))
+	}
 
-	// // data := balanceData{
-	// // 	User:    p.User,
-	// // 	Balance: balance,
-	// // }
+	data := balanceResultData{
+		User:    p.User,
+		Balance: balance,
+	}
 
-	return nil
+	return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookBalance, phrasebookBalanceSuccess, p.User, data))
 }
 
 func (c *BalanceCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookBalance, scenario, p.User, balanceData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookBalance, scenario, p.User, balanceErrorData{User: p.User})
 }
