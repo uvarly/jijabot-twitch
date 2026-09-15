@@ -19,9 +19,9 @@ type Bet struct {
 }
 
 type BetHistoryRepository interface {
+	WithExecutor(executor store.Executor) BetHistoryRepository
 	CountInPeriod(ctx context.Context, userID int64, period string) (int, error)
 	Record(ctx context.Context, b Bet) error
-	WithExecutor(executor store.Executor) BetHistoryRepository
 }
 
 type SQLiteBetHistoryRepository struct {

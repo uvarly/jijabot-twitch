@@ -41,10 +41,6 @@ type BetCommand struct {
 	log          logger.Logger
 }
 
-func (c *BetCommand) Name() string {
-	return "!bet"
-}
-
 func NewBetCommand(betPlacer BetPlacer, phrasePicker PhrasePicker, log logger.Logger) *BetCommand {
 	return &BetCommand{
 		betPlacer:    betPlacer,
@@ -53,9 +49,13 @@ func NewBetCommand(betPlacer BetPlacer, phrasePicker PhrasePicker, log logger.Lo
 	}
 }
 
+func (c *BetCommand) Name() string {
+	return "!bet"
+}
+
 func (c *BetCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	if p.UserID == "" {
-		c.log.ErrorContext(ctx, "bet attempted without a twitch user id", "user_id", p.UserID)
+		c.log.ErrorContext(ctx, "bet command attempted without a twitch user id", "user_id", p.UserID)
 		return r.Say(c.pickError(ctx, phrasebookBetInternalError, p))
 	}
 

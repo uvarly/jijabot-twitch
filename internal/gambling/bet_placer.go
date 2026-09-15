@@ -176,7 +176,7 @@ func (bp *BetPlacer) Place(ctx context.Context, twitchUserID, username string, a
 			return Result{}, ErrInsufficientFunds
 		}
 
-		return Result{}, fmt.Errorf("failed to settle bet: %w", err)
+		return Result{}, fmt.Errorf("failed to pay out bet: %w", err)
 	}
 
 	if err := betTx.Record(ctx, Bet{

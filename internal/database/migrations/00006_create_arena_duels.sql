@@ -4,7 +4,7 @@ CREATE TABLE arena_duels (
     challenger_id   INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     opponent_id     INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     stake           INTEGER NOT NULL CHECK (stake > 0),
-    status          TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'declined', 'cancelled', 'expired')),
+    status          TEXT NOT NULL CHECK (status IN ('pending', 'resolved', 'declined', 'cancelled', 'expired')),
     challenger_roll INTEGER CHECK (challenger_roll BETWEEN 0 AND 20),
     opponent_roll   INTEGER CHECK (opponent_roll BETWEEN 0 AND 20),
     result          TEXT CHECK (result IN ('challenger_won', 'opponent_won', 'draw')),
@@ -14,8 +14,8 @@ CREATE TABLE arena_duels (
 
     CHECK (challenger_id <> opponent_id),
     CHECK (
-        (status = 'completed'  AND challenger_roll IS NOT NULL AND opponent_roll IS NOT NULL AND result IS NOT NULL) OR
-        (status <> 'completed' AND challenger_roll IS NULL     AND opponent_roll IS NULL     AND result IS NULL)
+        (status = 'resolved'  AND challenger_roll IS NOT NULL AND opponent_roll IS NOT NULL AND result IS NOT NULL) OR
+        (status <> 'resolved' AND challenger_roll IS NULL     AND opponent_roll IS NULL     AND result IS NULL)
     )
 );
 
@@ -23,8 +23,8 @@ CREATE INDEX idx_arena_duels_challenger_id     ON arena_duels (challenger_id);
 CREATE INDEX idx_arena_duels_opponent_id       ON arena_duels (opponent_id);
 CREATE INDEX idx_arena_duels_status_expires_at ON arena_duels (status, expires_at);
 
-CREATE INDEX UNIQUE idx_arena_duels_one_pending_per_challenger ON arena_duels (challenger_id) WHERE status = 'pending';
-CREATE INDEX UNIQUE idx_arena_duels_one_pending_per_opponent   ON arena_duels (opponent_id)   WHERE status = 'pending';
+CREATE UNIQUE INDEX idx_arena_duels_one_pending_per_challenger ON arena_duels (challenger_id) WHERE status = 'pending';
+CREATE UNIQUE INDEX idx_arena_duels_one_pending_per_opponent   ON arena_duels (opponent_id)   WHERE status = 'pending';
 
 -- +goose Down
 DROP TABLE arena_duels;

@@ -50,7 +50,7 @@ func (c *DailyCommand) Name() string {
 
 func (c *DailyCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	if p.UserID == "" {
-		c.log.ErrorContext(ctx, "daily redeem attempted without a twitch user id", "user_id", p.UserID)
+		c.log.ErrorContext(ctx, "daily command attempted without a twitch user id", "user_id", p.UserID)
 		return r.Say(c.pickError(ctx, phrasebookDailyInternalError, p))
 	}
 

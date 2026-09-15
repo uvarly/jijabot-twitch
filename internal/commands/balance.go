@@ -44,7 +44,7 @@ func (c *BalanceCommand) Name() string {
 
 func (c *BalanceCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 	if p.UserID == "" {
-		c.log.ErrorContext(ctx, "balance attempted without a twitch user id", "user_id", p.UserID)
+		c.log.ErrorContext(ctx, "balance command attempted without a twitch user id", "user_id", p.UserID)
 		return r.Say(c.pickError(ctx, phrasebookBalanceInternalError, p))
 	}
 
