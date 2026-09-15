@@ -18,25 +18,25 @@ type Bet struct {
 	PlacedAt    time.Time
 }
 
-type BetRepository interface {
+type BetHistoryRepository interface {
 	CountInPeriod(ctx context.Context, userID int64, period string) (int, error)
 	Record(ctx context.Context, b Bet) error
-	WithExecutor(executor store.Executor) BetRepository
+	WithExecutor(executor store.Executor) BetHistoryRepository
 }
 
-type SQLiteBetRepository struct {
+type SQLiteBetHistoryRepository struct {
 	executor store.Executor
 }
 
-func NewSQLiteBetRepository(executor store.Executor) *SQLiteBetRepository {
-	return &SQLiteBetRepository{executor: executor}
+func NewSQLiteBetHistoryRepository(executor store.Executor) *SQLiteBetHistoryRepository {
+	return &SQLiteBetHistoryRepository{executor: executor}
 }
 
-func (r *SQLiteBetRepository) WithExecutor(executor store.Executor) BetRepository {
-	return &SQLiteBetRepository{executor: executor}
+func (r *SQLiteBetHistoryRepository) WithExecutor(executor store.Executor) BetHistoryRepository {
+	return &SQLiteBetHistoryRepository{executor: executor}
 }
 
-func (r *SQLiteBetRepository) CountInPeriod(ctx context.Context, userID int64, period string) (int, error) {
+func (r *SQLiteBetHistoryRepository) CountInPeriod(ctx context.Context, userID int64, period string) (int, error) {
 	const query = `
 		SELECT COUNT(*) FROM jija_coin_bet_history
 		WHERE user_id = ? AND bet_period = ?
@@ -51,7 +51,7 @@ func (r *SQLiteBetRepository) CountInPeriod(ctx context.Context, userID int64, p
 	return count, nil
 }
 
-func (r *SQLiteBetRepository) Record(ctx context.Context, b Bet) error {
+func (r *SQLiteBetHistoryRepository) Record(ctx context.Context, b Bet) error {
 	const query = `
 		INSERT INTO jija_coin_bet_history (user_id, amount, probability, won, payout, bet_period)
 		VALUES (?, ?, ?, ?, ?, ?)

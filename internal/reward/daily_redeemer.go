@@ -27,11 +27,11 @@ func WithClock(clock Clock) Option {
 }
 
 type DailyRedeemer struct {
-	txBeginner store.TxBeginner
-	users      users.Repository
-	redeem     RedeemRepository
-	wallet     wallet.Repository
-	clock      Clock
+	txBeginner              store.TxBeginner
+	userRepository          users.Repository
+	redeemHistoryRepository RedeemHistoryRepository
+	walletRepository        wallet.Repository
+	clock                   Clock
 
 	amount    int64
 	resetHour int
@@ -40,20 +40,20 @@ type DailyRedeemer struct {
 func NewDailyRedeemer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	redeemRepository RedeemRepository,
+	redeemHistoryRepository RedeemHistoryRepository,
 	walletRepository wallet.Repository,
 	amount int64,
 	resetHour int,
 	options ...Option,
 ) *DailyRedeemer {
 	dailyRedeemer := &DailyRedeemer{
-		txBeginner: txBeginner,
-		users:      userRepository,
-		redeem:     redeemRepository,
-		wallet:     walletRepository,
-		clock:      RealClock{},
-		amount:     amount,
-		resetHour:  resetHour,
+		txBeginner:              txBeginner,
+		userRepository:          userRepository,
+		redeemHistoryRepository: redeemHistoryRepository,
+		walletRepository:        walletRepository,
+		clock:                   RealClock{},
+		amount:                  amount,
+		resetHour:               resetHour,
 	}
 
 	for _, o := range options {
@@ -72,9 +72,9 @@ func (dc *DailyRedeemer) Redeem(ctx context.Context, twitchUserID, username stri
 	}
 	defer tx.Rollback()
 
-	userTx := dc.users.WithExecutor(tx)
-	redeemTx := dc.redeem.WithExecutor(tx)
-	walletTx := dc.wallet.WithExecutor(tx)
+	userTx := dc.userRepository.WithExecutor(tx)
+	redeemTx := dc.redeemHistoryRepository.WithExecutor(tx)
+	walletTx := dc.walletRepository.WithExecutor(tx)
 
 	user, err := userTx.GetOrCreate(ctx, twitchUserID, username)
 	if err != nil {

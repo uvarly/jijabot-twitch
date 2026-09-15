@@ -79,7 +79,7 @@ func main() {
 	redeemer := reward.NewDailyRedeemer(
 		db,
 		users.NewSQLiteRepository(db),
-		reward.NewSQLiteRedeemRepository(db),
+		reward.NewSQLiteRedeemHistoryRepository(db),
 		wallet.NewSQLiteRepository(db),
 		cfg.JijaBot.Daily.JijaCoinAmount,
 		cfg.JijaBot.Daily.ResetHourUTC,
@@ -88,7 +88,7 @@ func main() {
 	betPlacer := gambling.NewBetPlacer(
 		db,
 		users.NewSQLiteRepository(db),
-		gambling.NewSQLiteBetRepository(db),
+		gambling.NewSQLiteBetHistoryRepository(db),
 		wallet.NewSQLiteRepository(db),
 		cfg.JijaBot.Bet.BaseProbability,
 		cfg.JijaBot.Bet.PayoutMultiple,
@@ -112,7 +112,7 @@ func main() {
 	granter := grant.NewGranter(
 		db,
 		users.NewSQLiteRepository(db),
-		grant.NewSQLiteGrantRepository(db),
+		grant.NewSQLiteGrantHistoryRepository(db),
 		wallet.NewSQLiteRepository(db),
 	)
 

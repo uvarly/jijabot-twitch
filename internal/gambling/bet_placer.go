@@ -68,10 +68,11 @@ func WithClock(clock Clock) Option {
 }
 
 type BetPlacer struct {
-	txBeginner     store.TxBeginner
-	users          users.Repository
-	wallet         wallet.Repository
-	bets           BetRepository
+	txBeginner           store.TxBeginner
+	userRepository       users.Repository
+	walletRepository     wallet.Repository
+	betHistoryRepository BetHistoryRepository
+
 	oddsCalculator OddsCalculator
 	rng            RNG
 	clock          Clock
@@ -85,7 +86,7 @@ type BetPlacer struct {
 func NewBetPlacer(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	betRepository BetRepository,
+	betHistoryRepository BetHistoryRepository,
 	walletRepository wallet.Repository,
 	baseProbability float64,
 	payoutMultiple float64,
@@ -94,17 +95,17 @@ func NewBetPlacer(
 	options ...Option,
 ) *BetPlacer {
 	betPlacer := &BetPlacer{
-		txBeginner:      txBeginner,
-		users:           userRepository,
-		bets:            betRepository,
-		wallet:          walletRepository,
-		oddsCalculator:  StaticOddsCalculator{},
-		rng:             MathRandRNG{},
-		clock:           RealClock{},
-		baseProbability: baseProbability,
-		payoutMultiple:  payoutMultiple,
-		dailyLimit:      dailyLimit,
-		resetHour:       resetHour,
+		txBeginner:           txBeginner,
+		userRepository:       userRepository,
+		betHistoryRepository: betHistoryRepository,
+		walletRepository:     walletRepository,
+		oddsCalculator:       StaticOddsCalculator{},
+		rng:                  MathRandRNG{},
+		clock:                RealClock{},
+		baseProbability:      baseProbability,
+		payoutMultiple:       payoutMultiple,
+		dailyLimit:           dailyLimit,
+		resetHour:            resetHour,
 	}
 
 	for _, o := range options {
@@ -125,9 +126,9 @@ func (bp *BetPlacer) Place(ctx context.Context, twitchUserID, username string, a
 	}
 	defer tx.Rollback()
 
-	userTx := bp.users.WithExecutor(tx)
-	betTx := bp.bets.WithExecutor(tx)
-	walletTx := bp.wallet.WithExecutor(tx)
+	userTx := bp.userRepository.WithExecutor(tx)
+	betTx := bp.betHistoryRepository.WithExecutor(tx)
+	walletTx := bp.walletRepository.WithExecutor(tx)
 
 	user, err := userTx.GetOrCreate(ctx, twitchUserID, username)
 	if err != nil {

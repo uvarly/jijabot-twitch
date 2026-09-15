@@ -21,23 +21,23 @@ type Result struct {
 }
 
 type Granter struct {
-	txBeginner store.TxBeginner
-	users      users.Repository
-	grant      GrantRepository
-	wallet     wallet.Repository
+	txBeginner             store.TxBeginner
+	userRepository         users.Repository
+	grantHistoryRepository GrantHistoryRepository
+	walletRepository       wallet.Repository
 }
 
 func NewGranter(
 	txBeginner store.TxBeginner,
 	userRepository users.Repository,
-	grantRepository GrantRepository,
+	grantHistoryRepository GrantHistoryRepository,
 	walletRepository wallet.Repository,
 ) *Granter {
 	return &Granter{
-		txBeginner: txBeginner,
-		users:      userRepository,
-		grant:      grantRepository,
-		wallet:     walletRepository,
+		txBeginner:             txBeginner,
+		userRepository:         userRepository,
+		grantHistoryRepository: grantHistoryRepository,
+		walletRepository:       walletRepository,
 	}
 }
 
@@ -52,9 +52,9 @@ func (g *Granter) Grant(ctx context.Context, granterName, granteeName string, am
 	}
 	defer tx.Rollback()
 
-	userTx := g.users.WithExecutor(tx)
-	grantTx := g.grant.WithExecutor(tx)
-	walletTx := g.wallet.WithExecutor(tx)
+	userTx := g.userRepository.WithExecutor(tx)
+	grantTx := g.grantHistoryRepository.WithExecutor(tx)
+	walletTx := g.walletRepository.WithExecutor(tx)
 
 	granter, found, err := userTx.GetByUsername(ctx, granterName)
 	if err != nil {
