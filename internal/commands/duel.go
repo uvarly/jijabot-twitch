@@ -75,7 +75,7 @@ func (c *DuelCommand) Execute(ctx context.Context, p Payload, r Responder) error
 		return r.Say(c.pickError(ctx, phrasebookDuelMissingArgs, p))
 	}
 
-	amount, err := strconv.ParseInt(p.Args[0], 10, 64)
+	amount, err := strconv.ParseInt(p.Args[1], 10, 64)
 	if err != nil {
 		return r.Say(c.pickError(ctx, phrasebookDuelInvalidAmountNotInteger, p))
 	}

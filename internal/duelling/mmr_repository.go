@@ -47,7 +47,7 @@ func (r *SQLiteMMRRepository) GetOrCreate(ctx context.Context, userID int64, def
 		return 0, fmt.Errorf("failed to get mmr: %w", err)
 	}
 
-	return 0, nil
+	return rating, nil
 }
 
 func (r *SQLiteMMRRepository) Set(ctx context.Context, userID int64, rating int) error {

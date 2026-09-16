@@ -346,6 +346,10 @@ func (d *Duellist) Accept(ctx context.Context, opponentTwitchID, opponentName st
 		return AcceptResult{}, fmt.Errorf("failed to apply rating change: %w", err)
 	}
 
+	if err := duelTx.Resolve(ctx, duel.ID, challengerRoll, opponentRoll, result); err != nil {
+		return AcceptResult{}, fmt.Errorf("failed to resolve duel: %w", err)
+	}
+
 	if err := tx.Commit(); err != nil {
 		return AcceptResult{}, fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -457,6 +461,9 @@ func (d *Duellist) Cancel(ctx context.Context, challengerTwitchID, challengerNam
 	}
 
 	opponent, found, err := userTx.GetByID(ctx, duel.OpponentID)
+	if err != nil {
+		return CancelResult{}, fmt.Errorf("failed to get opponent: %w", err)
+	}
 
 	if !found {
 		return CancelResult{}, fmt.Errorf("failed to get opponent")

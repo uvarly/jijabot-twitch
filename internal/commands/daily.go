@@ -40,7 +40,7 @@ func NewDailyCommand(redeemer DailyRedeemer, phrasePicker PhrasePicker, log logg
 	return &DailyCommand{
 		redeemer:     redeemer,
 		phrasePicker: phrasePicker,
-		log:          log.With("command", "!bet"),
+		log:          log.With("command", "!daily"),
 	}
 }
 
