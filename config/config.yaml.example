@@ -27,6 +27,27 @@ phrasebook:
     - grant.invalid_amount_less_than_zero
     - grant.target_user_not_found
     - grant.success
+    - duel.internal_error
+    - duel.missing_args
+    - duel.invalid_amount_not_integer
+    - duel.invalid_amount_less_than_zero
+    - duel.target_user_not_found
+    - duel.cannot_target_self
+    - duel.user_has_pending_duel
+    - duel.target_has_pending_duel
+    - duel.insufficient_funds
+    - duel.daily_limit_reached
+    - duel.success
+    - duel_accept.internal_error
+    - duel_accept.no_incoming_duel
+    - duel_accept.insufficient_funds
+    - duel_accept.success
+    - duel_decline.internal_error
+    - duel_decline.no_incoming_duel
+    - duel_decline.success
+    - duel_cancel.internal_error
+    - duel_cancel.no_outgoing_duel
+    - duel_cancel.success
 
 twitch_bot:
   username: "your_twitch_username"

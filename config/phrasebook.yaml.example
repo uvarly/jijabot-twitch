@@ -80,3 +80,74 @@ grant:
   success: # required params: {{.User}}, {{.TargetUser}}, {{.Amount}}, {{.NewBalance}}
     - text: "@{{.User}} начислил {{.Amount}} жижа-коинов пользователю @{{.TargetUser}}. Баланс: {{.NewBalance}}."
       weight: 1.0
+
+duel:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  missing_args: # required params: {{.User}}
+    - text: "@{{.User}}, укажи пользователя и ставку. Пример: !duel @user 10."
+      weight: 1.0
+  invalid_amount_not_integer: # required params: {{.User}}
+    - text: "@{{.User}}, ставка должна быть числом. Пример: !duel @user 10."
+      weight: 1.0
+  invalid_amount_less_than_zero: # required params: {{.User}}
+    - text: "@{{.User}}, ставка должна быть больше нуля. Пример: !duel @user 10."
+      weight: 1.0
+  target_user_not_found: # required params: {{.User}}
+    - text: "@{{.User}}, пользователь не найден."
+      weight: 1.0
+  cannot_target_self: # required params: {{.User}}
+    - text: "@{{.User}}, нельзя вызвать самого себя на дуэль."
+      weight: 1.0
+  user_has_pending_duel: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя уже есть дуэль. Используй !duel_cancel, чтобы отменить ее."
+      weight: 1.0
+  target_has_pending_duel: # required params: {{.User}}
+    - text: "@{{.User}}, у пользователя уже есть дуэль."
+      weight: 1.0
+  insufficient_funds: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя недостаточно жижа-коинов для такой ставки."
+      weight: 1.0
+  daily_limit_reached: # required params: {{.User}}
+    - text: "@{{.User}}, на сегодня лимит дуэлей исчерпан."
+      weight: 1.0
+  success: # required params: {{.ChallengerUser}}, {{.OpponentUser}}, {{.Amount}}
+    - text: "@{{.ChallengerUser}} вызвал {{.OpponentUser}} на дуэль. Ставка: {{.Amount}} жижа-коинов."
+      weight: 1.0
+
+duel_accept:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  no_incoming_duel: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя нет входящих дуэлей."
+      weight: 1.0
+  insufficient_funds: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя недостаточно жижа-коинов для встречной ставки."
+      weight: 1.0
+  success: # required params: {{.ChallengerUser}}, {{.OpponentUser}}
+    - text: "@{{.OpponentUser}} принял вызов от @{{.ChallengerUser}}."
+      weight: 1.0
+
+duel_decline:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  no_incoming_duel: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя нет входящих дуэлей."
+      weight: 1.0
+  success: # required params: {{.ChallengerUser}}, {{.OpponentUser}}
+    - text: "@{{.OpponentUser}} отклонил вызов от @{{.ChallengerUser}}."
+      weight: 1.0
+
+duel_cancel:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  no_outgoing_duel: # required params: {{.User}}
+    - text: "@{{.User}}, у тебя нет исходящих дуэлей."
+      weight: 1.0
+  success: # required params: {{.ChallengerUser}}, {{.OpponentUser}}
+    - text: "@{{.ChallengerUser}} отменил дуэль с @{{.OpponentUser}}."
+      weight: 1.0
