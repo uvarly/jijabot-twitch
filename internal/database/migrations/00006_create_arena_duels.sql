@@ -1,16 +1,17 @@
 -- +goose Up
 CREATE TABLE arena_duels (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    challenger_id   INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    opponent_id     INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    stake           INTEGER NOT NULL CHECK (stake > 0),
-    status          TEXT NOT NULL CHECK (status IN ('pending', 'resolved', 'declined', 'cancelled', 'expired')),
-    challenger_roll INTEGER CHECK (challenger_roll BETWEEN 0 AND 20),
-    opponent_roll   INTEGER CHECK (opponent_roll BETWEEN 0 AND 20),
-    result          TEXT CHECK (result IN ('challenger_won', 'opponent_won', 'draw')),
-    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at      TIMESTAMP NOT NULL,
-    resolved_at     TIMESTAMP,
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    challenger_id    INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    opponent_id      INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    stake            INTEGER NOT NULL CHECK (stake > 0),
+    status           TEXT NOT NULL CHECK (status IN ('pending', 'resolved', 'declined', 'cancelled', 'expired')),
+    challenger_roll  INTEGER CHECK (challenger_roll BETWEEN 0 AND 20),
+    opponent_roll    INTEGER CHECK (opponent_roll BETWEEN 0 AND 20),
+    result           TEXT CHECK (result IN ('challenger_won', 'opponent_won', 'draw')),
+    challenge_period TEXT NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at       TIMESTAMP NOT NULL,
+    resolved_at      TIMESTAMP,
 
     CHECK (challenger_id <> opponent_id),
     CHECK (

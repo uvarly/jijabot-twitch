@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"jijabot/internal/dailywindow"
 	"jijabot/internal/store"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
@@ -101,6 +102,8 @@ type Duellist struct {
 	rng              RNG
 	ratingCalculator RatingCalculator
 
+	dailyLimit     int
+	resetHour      int
 	expiryDuration time.Duration
 	defaultRating  int
 }
@@ -113,6 +116,8 @@ func NewDuellist(
 	stakeHistoryRepository StakeHistoryRepository,
 	mmrRepository MMRRepository,
 	mmrHistoryRepository MMRHistoryRepository,
+	dailyLimit int,
+	resetHour int,
 	expiryDuration time.Duration,
 	defaultRating int,
 	kFactor int,
@@ -129,6 +134,8 @@ func NewDuellist(
 		clock:                  RealClock{},
 		rng:                    MathRandRNG{},
 		ratingCalculator:       NewEloCalculator(kFactor),
+		dailyLimit:             dailyLimit,
+		resetHour:              resetHour,
 		expiryDuration:         expiryDuration,
 		defaultRating:          defaultRating,
 	}
@@ -169,6 +176,13 @@ func (d *Duellist) Challenge(ctx context.Context, challengerTwitchID, challenger
 		return ChallengeResult{}, fmt.Errorf("failed to get or create challenger: %w", err)
 	}
 
+	challengePeriod := dailywindow.Key(d.clock.Now(), d.resetHour)
+
+	count, err := duelTx.CountInPeriod(ctx, challenger.ID, challengePeriod)
+	if count >= d.dailyLimit {
+		return ChallengeResult{}, ErrDailyLimitReached
+	}
+
 	opponent, found, err := userTx.GetByUsername(ctx, opponentName)
 	if err != nil {
 		return ChallengeResult{}, fmt.Errorf("failed to get opponent: %w", err)
@@ -205,7 +219,7 @@ func (d *Duellist) Challenge(ctx context.Context, challengerTwitchID, challenger
 
 	expiresAt := d.clock.Now().Add(d.expiryDuration)
 
-	duel, err := duelTx.Create(ctx, challenger.ID, opponent.ID, stake, expiresAt)
+	duel, err := duelTx.Create(ctx, challenger.ID, opponent.ID, stake, challengePeriod, expiresAt)
 	if err != nil {
 		return ChallengeResult{}, fmt.Errorf("failed to create duel: %w", err)
 	}

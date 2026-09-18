@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"jijabot/internal/app"
+	"jijabot/internal/authorization"
 	"jijabot/internal/commands"
 	"jijabot/internal/config"
 	"jijabot/internal/database"
+	"jijabot/internal/duelling"
 	"jijabot/internal/eventbus"
 	"jijabot/internal/gambling"
 	"jijabot/internal/grant"
@@ -70,6 +72,21 @@ func main() {
 		return
 	}
 
+	streamerChecker := authorization.NewStreamerChecker(cfg.JijaBot.StreamerTwitchUserID)
+
+	phraseBook, err := phrasebook.NewPhrasebook(cfg.Phrasebook.Path)
+	if err != nil {
+		log.Error("failed to load phrasebook", "error", err)
+		return
+	}
+
+	if err := phraseBook.ValidateEntries(cfg.Phrasebook.RequiredEntries...); err != nil {
+		log.Error("failed to validate phrasebook", "error", err)
+		return
+	}
+
+	phrasePicker := phrasebook.NewPicker(phraseBook)
+
 	balanceGetter := wallet.NewBalanceGetter(
 		db,
 		users.NewSQLiteRepository(db),
@@ -96,19 +113,6 @@ func main() {
 		cfg.JijaBot.Bet.ResetHourUTC,
 	)
 
-	phraseBook, err := phrasebook.NewPhrasebook(cfg.Phrasebook.Path)
-	if err != nil {
-		log.Error("failed to load phrasebook", "error", err)
-		return
-	}
-
-	if err := phraseBook.ValidateEntries(cfg.Phrasebook.RequiredEntries...); err != nil {
-		log.Error("failed to validate phrasebook", "error", err)
-		return
-	}
-
-	phrasePicker := phrasebook.NewPicker(phraseBook)
-
 	granter := grant.NewGranter(
 		db,
 		users.NewSQLiteRepository(db),
@@ -116,12 +120,31 @@ func main() {
 		wallet.NewSQLiteRepository(db),
 	)
 
+	duellist := duelling.NewDuellist(
+		db,
+		users.NewSQLiteRepository(db),
+		wallet.NewSQLiteRepository(db),
+		duelling.NewSQLiteDuelRepository(db),
+		duelling.NewSQLiteStakeHistoryRepository(db),
+		duelling.NewSQLiteMMRRepository(db),
+		duelling.NewSQLiteMMRHistoryRepository(db),
+		cfg.JijaBot.Duel.DailyLimit,
+		cfg.JijaBot.Duel.ResetHourUTC,
+		cfg.JijaBot.Duel.ExpiryDuration,
+		cfg.JijaBot.Duel.MMR.ELO.DefaultRating,
+		cfg.JijaBot.Duel.MMR.ELO.KFactor,
+	)
+
 	router := commands.NewRouter(bot, log)
-	router.Register(commands.NewHiCommand(phrasePicker, log))
+	router.Register(commands.NewHiCommand(streamerChecker, phrasePicker, log))
 	router.Register(commands.NewBalanceCommand(balanceGetter, phrasePicker, log))
 	router.Register(commands.NewDailyCommand(redeemer, phrasePicker, log))
 	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
-	router.Register(commands.NewGrantCommand(granter, phrasePicker, log))
+	router.Register(commands.NewGrantCommand(streamerChecker, granter, phrasePicker, log))
+	router.Register(commands.NewDuelCommand(duellist, phrasePicker, log))
+	router.Register(commands.NewDuelAcceptCommand(duellist, phrasePicker, log))
+	router.Register(commands.NewDuelDeclineCommand(duellist, phrasePicker, log))
+	router.Register(commands.NewDuelCancelCommand(duellist, phrasePicker, log))
 
 	bus.Subscribe(eventbus.EventMessage, router.HandleMessage)
 

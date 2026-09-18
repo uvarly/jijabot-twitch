@@ -13,7 +13,8 @@ const (
 	phrasebookDuelAcceptInternalError     = "internal_error"
 	phrasebookDuelAcceptNoIncomingDuel    = "no_incoming_duel"
 	phrasebookDuelAcceptInsufficientFunds = "insufficient_funds"
-	phrasebookDuelAcceptSuccess           = "success"
+	phrasebookDuelAcceptSuccessWithWinner = "success_with_winner"
+	phrasebookDuelAcceptSuccessWithDraw   = "success_with_draw"
 )
 
 type duelAcceptErrorData struct {
@@ -23,6 +24,9 @@ type duelAcceptErrorData struct {
 type duelAcceptSuccessData struct {
 	ChallengerUser string
 	OpponentUser   string
+	ChallengerRoll int
+	OpponentRoll   int
+	Winner         string
 }
 
 type DuelAcceptCommand struct {
@@ -64,9 +68,21 @@ func (c *DuelAcceptCommand) Execute(ctx context.Context, p Payload, r Responder)
 	data := duelAcceptSuccessData{
 		ChallengerUser: result.ChallengerName,
 		OpponentUser:   result.OpponentName,
+		ChallengerRoll: result.ChallengerRoll,
+		OpponentRoll:   result.OpponentRoll,
+		Winner:         result.ChallengerName,
 	}
 
-	return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelAccept, phrasebookDuelAcceptSuccess, p.User, data))
+	switch result.Result {
+	case duelling.DuelResultChallengerWon:
+		data.Winner = result.ChallengerName
+	case duelling.DuelResultOpponentWon:
+		data.Winner = result.OpponentName
+	case duelling.DuelResultDraw:
+		data.Winner = "Ничья"
+	}
+
+	return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelAccept, phrasebookDuelAcceptSuccessWithWinner, p.User, data))
 }
 
 func (c *DuelAcceptCommand) pickError(ctx context.Context, scenario string, p Payload) string {

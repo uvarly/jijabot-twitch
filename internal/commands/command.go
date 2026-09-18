@@ -3,15 +3,15 @@ package commands
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"jijabot/internal/logger"
 )
 
-const (
-	streamerNickname = "unclekost"
-	fallbackMessage  = "@%s, что-то пошло не так, попробуй позже."
-)
+const fallbackMessage = "@%s, что-то пошло не так, попробуй позже."
+
+type StreamerChecker interface {
+	IsStreamer(twitchUserID string) bool
+}
 
 type Payload struct {
 	User   string
@@ -41,8 +41,4 @@ func pickPhraseOrFallback(ctx context.Context, log logger.Logger, phrasePicker P
 	}
 
 	return message
-}
-
-func isStreamer(user string) bool {
-	return user == strings.ToLower(strings.TrimPrefix(streamerNickname, "@"))
 }

@@ -31,22 +31,24 @@ const (
 )
 
 type Duel struct {
-	ID             int64
-	ChallengerID   int64
-	OpponentID     int64
-	Stake          int64
-	Status         DuelStatus
-	ChallengerRoll *int
-	OpponentRoll   *int
-	Result         *DuelResult
-	CreatedAt      time.Time
-	ExpiresAt      time.Time
-	ResolvedAt     *time.Time
+	ID              int64
+	ChallengerID    int64
+	OpponentID      int64
+	Stake           int64
+	Status          DuelStatus
+	ChallengerRoll  *int
+	OpponentRoll    *int
+	Result          *DuelResult
+	ChallengePeriod string
+	CreatedAt       time.Time
+	ExpiresAt       time.Time
+	ResolvedAt      *time.Time
 }
 
 type DuelRepository interface {
 	WithExecutor(executor store.Executor) DuelRepository
-	Create(ctx context.Context, challengerID, opponentID int64, stake int64, expiresAt time.Time) (Duel, error)
+	CountInPeriod(ctx context.Context, challengerID int64, challengePeriod string) (int, error)
+	Create(ctx context.Context, challengerID, opponentID int64, stake int64, challengePeriod string, expiresAt time.Time) (Duel, error)
 	FindPendingDuelByChallenger(ctx context.Context, challengerID int64) (Duel, bool, error)
 	FindPendingDuelByOpponent(ctx context.Context, opponentID int64) (Duel, bool, error)
 	Resolve(ctx context.Context, duelID int64, challengerRoll, opponentRoll int, result DuelResult) error
@@ -66,10 +68,25 @@ func (r *SQLiteDuelRepository) WithExecutor(executor store.Executor) DuelReposit
 	return &SQLiteDuelRepository{executor: executor}
 }
 
-func (r *SQLiteDuelRepository) Create(ctx context.Context, challengerID, opponentID int64, stake int64, expiresAt time.Time) (Duel, error) {
+func (r *SQLiteDuelRepository) CountInPeriod(ctx context.Context, challengerID int64, challengePeriod string) (int, error) {
 	const query = `
-		INSERT INTO arena_duels (challenger_id, opponent_id, stake, status, expires_at)
-		VALUES (?, ?, ?, 'pending', ?)
+		SELECT COUNT(*) FROM arena_duels
+		WHERE challenger_id = ? AND challenge_period = ?
+	`
+
+	var count int
+
+	if err := r.executor.QueryRowContext(ctx, query, challengerID, challengePeriod).Scan(&count); err != nil {
+		return 0, fmt.Errorf("failed to count challenger's duels: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *SQLiteDuelRepository) Create(ctx context.Context, challengerID, opponentID int64, stake int64, challengePeriod string, expiresAt time.Time) (Duel, error) {
+	const query = `
+		INSERT INTO arena_duels (challenger_id, opponent_id, stake, status, challenge_period, expires_at)
+		VALUES (?, ?, ?, 'pending', ?, ?)
 		RETURNING id, created_at
 	`
 
@@ -78,7 +95,7 @@ func (r *SQLiteDuelRepository) Create(ctx context.Context, challengerID, opponen
 		createdAt time.Time
 	)
 
-	if err := r.executor.QueryRowContext(ctx, query, challengerID, opponentID, stake, expiresAt).Scan(&id, &createdAt); err != nil {
+	if err := r.executor.QueryRowContext(ctx, query, challengerID, opponentID, stake, challengePeriod, expiresAt).Scan(&id, &createdAt); err != nil {
 		return Duel{}, fmt.Errorf("failed to create duel: %w", err)
 	}
 

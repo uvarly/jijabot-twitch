@@ -18,14 +18,16 @@ type hiGreetingData struct {
 }
 
 type HiCommand struct {
-	phrasePicker PhrasePicker
-	log          logger.Logger
+	streamerChecker StreamerChecker
+	phrasePicker    PhrasePicker
+	log             logger.Logger
 }
 
-func NewHiCommand(phrasePicker PhrasePicker, log logger.Logger) *HiCommand {
+func NewHiCommand(streamerChecker StreamerChecker, phrasePicker PhrasePicker, log logger.Logger) *HiCommand {
 	return &HiCommand{
-		phrasePicker: phrasePicker,
-		log:          log.With("command", "!hi"),
+		streamerChecker: streamerChecker,
+		phrasePicker:    phrasePicker,
+		log:             log.With("command", "!hi"),
 	}
 }
 
@@ -41,7 +43,7 @@ func (c *HiCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 
 	scenario := phrasebookHiGreeting
 
-	if isStreamer(p.User) {
+	if c.streamerChecker.IsStreamer(p.UserID) {
 		scenario = phrasebookHiGreetingStreamer
 	}
 

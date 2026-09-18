@@ -36,7 +36,7 @@ func (r *SQLiteBetHistoryRepository) WithExecutor(executor store.Executor) BetHi
 	return &SQLiteBetHistoryRepository{executor: executor}
 }
 
-func (r *SQLiteBetHistoryRepository) CountInPeriod(ctx context.Context, userID int64, period string) (int, error) {
+func (r *SQLiteBetHistoryRepository) CountInPeriod(ctx context.Context, userID int64, betPeriod string) (int, error) {
 	const query = `
 		SELECT COUNT(*) FROM jija_coin_bet_history
 		WHERE user_id = ? AND bet_period = ?
@@ -44,7 +44,7 @@ func (r *SQLiteBetHistoryRepository) CountInPeriod(ctx context.Context, userID i
 
 	var count int
 
-	if err := r.executor.QueryRowContext(ctx, query, userID, period).Scan(&count); err != nil {
+	if err := r.executor.QueryRowContext(ctx, query, userID, betPeriod).Scan(&count); err != nil {
 		return 0, fmt.Errorf("failed to count bets: %w", err)
 	}
 

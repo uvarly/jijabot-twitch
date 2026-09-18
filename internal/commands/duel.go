@@ -70,7 +70,7 @@ func (c *DuelCommand) Execute(ctx context.Context, p Payload, r Responder) error
 		return r.Say(c.pickError(ctx, phrasebookDuelMissingArgs, p))
 	}
 
-	targetUser := strings.TrimPrefix(p.Args[0], "@")
+	targetUser := strings.ToLower(strings.TrimPrefix(p.Args[0], "@"))
 	if targetUser == "" {
 		return r.Say(c.pickError(ctx, phrasebookDuelMissingArgs, p))
 	}

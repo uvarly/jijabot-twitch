@@ -59,6 +59,7 @@ oauth:
   token_file_path: "your_token_file_path"
 
 jija_bot:
+  streamer_twitch_user_id: "your_twitch_user_id"
   daily:
     jija_coin_amount: 10
     reset_hour_utc: 12
@@ -67,3 +68,11 @@ jija_bot:
     payout_multiple: 2.0
     daily_limit: 5
     reset_hour_utc: 12
+  duel:
+    daily_limit: 5
+    reset_hour_utc: 12
+    expiry_duration: 5m
+    mmr:
+      elo:
+        default_rating: 1000
+        k_factor: 32

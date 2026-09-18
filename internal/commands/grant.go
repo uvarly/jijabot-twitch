@@ -37,16 +37,18 @@ type Granter interface {
 }
 
 type GrantCommand struct {
-	granter      Granter
-	phrasePicker PhrasePicker
-	log          logger.Logger
+	streamerChecker StreamerChecker
+	granter         Granter
+	phrasePicker    PhrasePicker
+	log             logger.Logger
 }
 
-func NewGrantCommand(granter Granter, phrasePicker PhrasePicker, log logger.Logger) *GrantCommand {
+func NewGrantCommand(streamerChecker StreamerChecker, granter Granter, phrasePicker PhrasePicker, log logger.Logger) *GrantCommand {
 	return &GrantCommand{
-		granter:      granter,
-		phrasePicker: phrasePicker,
-		log:          log.With("command", "!grant"),
+		streamerChecker: streamerChecker,
+		granter:         granter,
+		phrasePicker:    phrasePicker,
+		log:             log.With("command", "!grant"),
 	}
 }
 
@@ -55,7 +57,12 @@ func (c *GrantCommand) Name() string {
 }
 
 func (c *GrantCommand) Execute(ctx context.Context, p Payload, r Responder) error {
-	if !isStreamer(p.User) {
+	if p.UserID == "" {
+		c.log.ErrorContext(ctx, "grant command attempted without a twitch user id", "user_id", p.UserID)
+		return r.Say(c.pickError(ctx, phrasebookGrantInternalError, p))
+	}
+
+	if !c.streamerChecker.IsStreamer(p.UserID) {
 		c.log.InfoContext(ctx, "grant command attempted by a non-streamer user", "user", p.User)
 		return r.Say(c.pickError(ctx, phrasebookGrantPermissionDenied, p))
 	}
@@ -64,7 +71,7 @@ func (c *GrantCommand) Execute(ctx context.Context, p Payload, r Responder) erro
 		return r.Say(c.pickError(ctx, phrasebookGrantMissingArgs, p))
 	}
 
-	targetUser := strings.TrimPrefix(p.Args[0], "@")
+	targetUser := strings.ToLower(strings.TrimPrefix(p.Args[0], "@"))
 	if targetUser == "" {
 		return r.Say(c.pickError(ctx, phrasebookGrantMissingArgs, p))
 	}

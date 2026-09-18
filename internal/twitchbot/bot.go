@@ -43,7 +43,7 @@ func NewTwitchBot(cfg config.Config, bus eventbus.Publisher, tokenProvider oauth
 	})
 
 	client.OnPrivateMessage(func(message twitchirc.PrivateMessage) {
-		bot.log.Debug("received message", "user", message.User.Name, "message", message.Message)
+		bot.log.Debug("received message", "user_id", message.User.ID, "user", message.User.Name, "message", message.Message)
 		bot.bus.Publish(bot.ctx, eventbus.Event{
 			Type: eventbus.EventMessage,
 			Payload: eventbus.MessagePayload{

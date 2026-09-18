@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
@@ -41,6 +42,9 @@ type OauthConfig struct {
 type JijaBotConfig struct {
 	Daily DailyConfig `yaml:"daily"`
 	Bet   BetConfig   `yaml:"bet"`
+	Duel  DuelConfig  `yaml:"duel"`
+
+	StreamerTwitchUserID string `yaml:"streamer_twitch_user_id" validate:"required"`
 }
 
 type DailyConfig struct {
@@ -53,6 +57,23 @@ type BetConfig struct {
 	PayoutMultiple  float64 `yaml:"payout_multiple" validate:"required"`
 	DailyLimit      int     `yaml:"daily_limit" validate:"required"`
 	ResetHourUTC    int     `yaml:"reset_hour_utc" validate:"required"`
+}
+
+type DuelConfig struct {
+	MMR MMRConfig
+
+	DailyLimit     int           `yaml:"daily_limit" validate:"required"`
+	ResetHourUTC   int           `yaml:"reset_hour_utc" validate:"required"`
+	ExpiryDuration time.Duration `yaml:"expiry_duration" validate:"required"`
+}
+
+type MMRConfig struct {
+	ELO ELOConfig `yaml:"elo"`
+}
+
+type ELOConfig struct {
+	DefaultRating int `yaml:"default_rating" validate:"required"`
+	KFactor       int `yaml:"k_factor" validate:"required"`
 }
 
 func NewConfig() (Config, error) {
