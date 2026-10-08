@@ -13,6 +13,10 @@ const (
 	phrasebookHiGreetingStreamer = "greeting_streamer"
 )
 
+type hiErrorData struct {
+	User string
+}
+
 type hiGreetingData struct {
 	User string
 }
@@ -54,5 +58,5 @@ func (c *HiCommand) Execute(ctx context.Context, p Payload, r Responder) error {
 }
 
 func (c *HiCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookHiInternalError, scenario, p.User, dailyErrorData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookHiInternalError, scenario, p.User, hiErrorData{User: p.User})
 }

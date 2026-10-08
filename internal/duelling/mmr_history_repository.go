@@ -2,6 +2,8 @@ package duelling
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"jijabot/internal/store"
@@ -10,6 +12,7 @@ import (
 type MMRHistoryRepository interface {
 	WithExecutor(executor store.Executor) MMRHistoryRepository
 	Record(ctx context.Context, duelID, userID int64, ratingDelta int) error
+	CountWinsByUserID(ctx context.Context, userID int64) (int64, error)
 }
 
 type SQLiteMMRHistoryRepository struct {
@@ -35,4 +38,32 @@ func (r *SQLiteMMRHistoryRepository) Record(ctx context.Context, duelID, userID 
 	}
 
 	return nil
+}
+
+func (r *SQLiteMMRHistoryRepository) CountWinsByUserID(ctx context.Context, userID int64) (int64, error) {
+	const query = `
+		SELECT COUNT(*)
+		FROM arena_duel_mmr_history
+		WHERE user_id = ? AND rating_delta > 0
+	`
+
+	var count int64
+
+	if err := r.executor.QueryRowContext(ctx, query, userID).Scan(&count); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+
+		return 0, fmt.Errorf("failed to count wins: %w", err)
+	}
+
+	// if err != nil {
+	// 	if errors.Is(err, sql.ErrNoRows) {
+	// 		return Duel{}, false, nil
+	// 	}
+
+	// 	return Duel{}, false, fmt.Errorf("failed to scan pending duel: %w", err)
+	// }
+
+	return count, nil
 }

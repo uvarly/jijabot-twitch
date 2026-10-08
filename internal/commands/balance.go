@@ -20,10 +20,6 @@ type balanceResultData struct {
 	Balance int64
 }
 
-type BalanceGetter interface {
-	Get(ctx context.Context, twitchUserID, username string) (int64, error)
-}
-
 type BalanceCommand struct {
 	balanceGetter BalanceGetter
 	phrasePicker  PhrasePicker

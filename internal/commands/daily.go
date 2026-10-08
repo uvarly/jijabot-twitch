@@ -25,11 +25,6 @@ type dailySuccessData struct {
 	Balance int64
 }
 
-type DailyRedeemer interface {
-	Amount() int64
-	Redeem(ctx context.Context, twitchUserID, username string) (int64, error)
-}
-
 type DailyCommand struct {
 	redeemer     DailyRedeemer
 	phrasePicker PhrasePicker

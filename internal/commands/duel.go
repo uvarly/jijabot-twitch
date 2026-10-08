@@ -35,13 +35,6 @@ type duelSuccessData struct {
 	Amount         int64
 }
 
-type Duellist interface {
-	Challenge(ctx context.Context, challengerTwitchID, challengerName, opponentName string, stake int64) (duelling.ChallengeResult, error)
-	Accept(ctx context.Context, opponentTwitchID, opponentName string) (duelling.AcceptResult, error)
-	Decline(ctx context.Context, opponentTwitchID, opponentName string) (duelling.DeclineResult, error)
-	Cancel(ctx context.Context, challengerTwitchID, challengerName string) (duelling.CancelResult, error)
-}
-
 type DuelCommand struct {
 	duellist     Duellist
 	phrasePicker PhrasePicker

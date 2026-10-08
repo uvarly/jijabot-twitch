@@ -93,7 +93,7 @@ func main() {
 		wallet.NewSQLiteRepository(db),
 	)
 
-	redeemer := reward.NewDailyRedeemer(
+	dailyRedeemer := reward.NewDailyRedeemer(
 		db,
 		users.NewSQLiteRepository(db),
 		reward.NewSQLiteRedeemHistoryRepository(db),
@@ -120,6 +120,13 @@ func main() {
 		wallet.NewSQLiteRepository(db),
 	)
 
+	statsProvider := duelling.NewStatsProvider(
+		db,
+		users.NewSQLiteRepository(db),
+		duelling.NewSQLiteMMRRepository(db),
+		duelling.NewSQLiteMMRHistoryRepository(db),
+	)
+
 	duellist := duelling.NewDuellist(
 		db,
 		users.NewSQLiteRepository(db),
@@ -138,9 +145,11 @@ func main() {
 	router := commands.NewRouter(bot, log)
 	router.Register(commands.NewHiCommand(streamerChecker, phrasePicker, log))
 	router.Register(commands.NewBalanceCommand(balanceGetter, phrasePicker, log))
-	router.Register(commands.NewDailyCommand(redeemer, phrasePicker, log))
+	router.Register(commands.NewDailyCommand(dailyRedeemer, phrasePicker, log))
 	router.Register(commands.NewBetCommand(betPlacer, phrasePicker, log))
 	router.Register(commands.NewGrantCommand(streamerChecker, granter, phrasePicker, log))
+	router.Register(commands.NewArenaCommand(phrasePicker, log))
+	router.Register(commands.NewArenaTopCommand(statsProvider, phrasePicker, log))
 	router.Register(commands.NewDuelCommand(duellist, phrasePicker, log))
 	router.Register(commands.NewDuelAcceptCommand(duellist, phrasePicker, log))
 	router.Register(commands.NewDuelDeclineCommand(duellist, phrasePicker, log))

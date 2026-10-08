@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"strings"
 	"time"
 
@@ -12,19 +11,6 @@ import (
 	"jijabot/internal/store"
 	"jijabot/internal/users"
 	"jijabot/internal/wallet"
-)
-
-var (
-	ErrInvalidStake             = errors.New("duelling: stake must be positive")
-	ErrDailyLimitReached        = errors.New("duelling: daily duel limit reached") // TODO
-	ErrCannotChallengeSelf      = errors.New("duelling: cannot challenge yourself")
-	ErrChallengerNotFound       = errors.New("duelling: challenger not found")
-	ErrOpponentNotFound         = errors.New("duelling: opponent not found")
-	ErrChallengerHasPendingDuel = errors.New("duelling: challenger has a pending duel")
-	ErrOpponentHasPendingDuel   = errors.New("duelling: opponent has a pending duel")
-	ErrInsufficientFunds        = wallet.ErrInsufficientFunds
-	ErrNoIncomingDuel           = errors.New("duelling: no incoming duel to respond to")
-	ErrNoOutgoingDuel           = errors.New("duelling: no outgoing duel to cancel")
 )
 
 type ChallengeResult struct {
@@ -58,22 +44,6 @@ type CancelResult struct {
 	ChallengerName string
 	OpponentName   string
 }
-
-type Clock interface {
-	Now() time.Time
-}
-
-type RealClock struct{}
-
-func (RealClock) Now() time.Time { return time.Now() }
-
-type RNG interface {
-	Int64N(n int64) int64
-}
-
-type MathRandRNG struct{}
-
-func (MathRandRNG) Int64N(n int64) int64 { return rand.Int64N(n) }
 
 type Option func(*Duellist)
 

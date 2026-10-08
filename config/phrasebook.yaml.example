@@ -81,6 +81,41 @@ grant:
     - text: "@{{.User}} начислил {{.Amount}} жижа-коинов пользователю @{{.TargetUser}}. Баланс: {{.NewBalance}}."
       weight: 1.0
 
+arena:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  success:
+    - text: "⚔️ ARENA JIJA WARRIORS ⚔️ Место, где зрители превращаются в настоящих воинов! Вступай в бой и докажи всем, кто здесь главный — победителей ждёт слава! Готов рискнуть?"
+      weight: 1.0
+
+arena_top:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  no_top_user_yet: # required params: {{.User}}
+    - text: "@{{.User}}, никто ещё не занял первое место."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.RatingValue}}, {{.WinCount}}
+    - text: "@{{.User}} — {{.RatingValue}} MMR — {{.WinCount}} побед."
+      weight: 1.0
+
+arena_stats:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.WinCount}}, {{.LossCount}}, {{.DrawCount}}, {{.WinRatePercent}}
+    - text: "⚔️ @{{.User}} ⚔️ W: {{.WinCount}} | L: {{.LossCount}} | D: {{.DrawCount}} | WR: {{.WinRatePercent}}%"
+      weight: 1.0
+
+arena_rank:
+  internal_error: # required params: {{.User}}
+    - text: "@{{.User}}, что-то пошло не так, попробуй позже."
+      weight: 1.0
+  success: # required params: {{.User}}, {{.Rank}}, {{.RatingValue}}
+    - text: "@{{.User}}, твой ранг: {{.Rank}} {{.RatingValue}} MMR"
+      weight: 1.0
+
 duel:
   internal_error: # required params: {{.User}}
     - text: "@{{.User}}, что-то пошло не так, попробуй позже."

@@ -2,15 +2,23 @@ package duelling
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"jijabot/internal/store"
 )
 
+type MMREntry struct {
+	UserID int64
+	Rating int64
+}
+
 type MMRRepository interface {
 	WithExecutor(executor store.Executor) MMRRepository
 	GetOrCreate(ctx context.Context, userID int64, defaultRating int) (int, error)
 	Set(ctx context.Context, userID int64, rating int) error
+	GetTopMMREntry(ctx context.Context) (MMREntry, error)
 }
 
 type SQLiteMMRRepository struct {
@@ -62,4 +70,28 @@ func (r *SQLiteMMRRepository) Set(ctx context.Context, userID int64, rating int)
 	}
 
 	return nil
+}
+
+func (r *SQLiteMMRRepository) GetTopMMREntry(ctx context.Context) (MMREntry, error) {
+	const query = `
+		SELECT user_id, rating
+		FROM arena_duel_mmr
+		ORDER BY rating DESC
+		LIMIT 1
+	`
+
+	var (
+		userID int64
+		rating int64
+	)
+
+	if err := r.executor.QueryRowContext(ctx, query).Scan(&userID, &rating); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return MMREntry{}, nil
+		}
+
+		return MMREntry{}, fmt.Errorf("failed to get top mmr entry: %w", err)
+	}
+
+	return MMREntry{UserID: userID, Rating: rating}, nil
 }

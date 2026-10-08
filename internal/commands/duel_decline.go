@@ -67,5 +67,5 @@ func (c *DuelDeclineCommand) Execute(ctx context.Context, p Payload, r Responder
 }
 
 func (c *DuelDeclineCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelDecline, scenario, p.User, duelErrorData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelDecline, scenario, p.User, duelDeclineErrorData{User: p.User})
 }

@@ -31,10 +31,6 @@ type betResultData struct {
 	NewBalance int64
 }
 
-type BetPlacer interface {
-	Place(ctx context.Context, twitchUserID, username string, amount int64) (gambling.Result, error)
-}
-
 type BetCommand struct {
 	betPlacer    BetPlacer
 	phrasePicker PhrasePicker
