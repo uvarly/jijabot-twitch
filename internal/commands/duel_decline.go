@@ -54,7 +54,7 @@ func (c *DuelDeclineCommand) Execute(ctx context.Context, p Payload, r Responder
 	case errors.Is(err, duelling.ErrNoIncomingDuel):
 		return r.Say(c.pickError(ctx, phrasebookDuelDeclineNoIncomingDuel, p))
 	case err != nil:
-		c.log.ErrorContext(ctx, "failed to decline duel", "user", p.User, "target_user", "error", err)
+		c.log.ErrorContext(ctx, "failed to decline duel", "user", p.User, "error", err)
 		return r.Say(c.pickError(ctx, phrasebookDuelDeclineInternalError, p))
 	}
 

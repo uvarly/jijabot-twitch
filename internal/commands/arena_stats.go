@@ -69,5 +69,5 @@ func (c *ArenaStatsCommand) Execute(ctx context.Context, p Payload, r Responder)
 }
 
 func (c *ArenaStatsCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaStatsInternalError, scenario, p.User, arenaStatsErrorData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaStats, scenario, p.User, arenaStatsErrorData{User: p.User})
 }

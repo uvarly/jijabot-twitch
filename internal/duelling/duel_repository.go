@@ -45,13 +45,19 @@ type Duel struct {
 	ResolvedAt      *time.Time
 }
 
+type DuelRecord struct {
+	Wins   int64
+	Losses int64
+	Draws  int64
+}
+
 type DuelRepository interface {
 	WithExecutor(executor store.Executor) DuelRepository
 	CountInPeriod(ctx context.Context, challengerID int64, challengePeriod string) (int, error)
 	Create(ctx context.Context, challengerID, opponentID int64, stake int64, challengePeriod string, expiresAt time.Time) (Duel, error)
-	FindResolvedDuelsBy(ctx context.Context, userID int64) ([]Duel, error)
 	FindPendingDuelByChallenger(ctx context.Context, challengerID int64) (Duel, bool, error)
 	FindPendingDuelByOpponent(ctx context.Context, opponentID int64) (Duel, bool, error)
+	CountResultsBy(ctx context.Context, userID int64) (DuelRecord, error)
 	Resolve(ctx context.Context, duelID int64, challengerRoll, opponentRoll int, result DuelResult) error
 	SetStatus(ctx context.Context, duelID int64, status DuelStatus) error
 	ExpirePending(ctx context.Context, now time.Time) ([]Duel, error)
@@ -111,57 +117,6 @@ func (r *SQLiteDuelRepository) Create(ctx context.Context, challengerID, opponen
 	}, nil
 }
 
-func (r *SQLiteDuelRepository) FindResolvedDuelsBy(ctx context.Context, userID int64) ([]Duel, error) {
-	const query = `
-		SELECT id, challenger_id, opponent_id, stake, status, challenger_roll, opponent_roll, result, created_at, expires_at, resolved_at
-		FROM arena_duels
-		WHERE status = 'resolved' AND (challenger_id = ? OR opponent_id = ?)
-	`
-
-	rows, err := r.executor.QueryContext(ctx, query, userID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find resolved duels: %w", err)
-	}
-	defer rows.Close()
-
-	var resolvedDuels []Duel
-
-	for rows.Next() {
-		var (
-			resolvedDuel   Duel
-			status         string
-			challengerRoll *int
-			opponentRoll   *int
-			result         *string
-			resolvedAt     *time.Time
-		)
-
-		if err := rows.Scan(&resolvedDuel.ID, &resolvedDuel.ChallengerID, &resolvedDuel.OpponentID, &resolvedDuel.Stake,
-			&status, &challengerRoll, &opponentRoll, &result,
-			&resolvedDuel.CreatedAt, &resolvedDuel.ExpiresAt, &resolvedAt); err != nil {
-			return nil, fmt.Errorf("failed to scan resolved duel: %w", err)
-		}
-
-		resolvedDuel.Status = DuelStatus(status)
-		resolvedDuel.ChallengerRoll = challengerRoll
-		resolvedDuel.OpponentRoll = opponentRoll
-		resolvedDuel.ResolvedAt = resolvedAt
-
-		if result != nil {
-			r := DuelResult(*result)
-			resolvedDuel.Result = &r
-		}
-
-		resolvedDuels = append(resolvedDuels, resolvedDuel)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate resolved duels: %w", err)
-	}
-
-	return resolvedDuels, nil
-}
-
 const findPendingDuelQuery = `
 	SELECT id, challenger_id, opponent_id, stake, status, challenger_roll, opponent_roll, result, created_at, expires_at, resolved_at
 	FROM arena_duels
@@ -211,6 +166,30 @@ func (r SQLiteDuelRepository) findPendingDuelBy(ctx context.Context, column stri
 	}
 
 	return duel, true, nil
+}
+
+func (r *SQLiteDuelRepository) CountResultsBy(ctx context.Context, userID int64) (DuelRecord, error) {
+	const query = `
+		SELECT
+			COALESCE(SUM(CASE
+				WHEN (challenger_id = ?1 AND result = 'challenger_won')
+				  OR (opponent_id   = ?1 AND result = 'opponent_won') THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE
+				WHEN (challenger_id = ?1 AND result = 'opponent_won')
+				  OR (opponent_id   = ?1 AND result = 'challenger_won') THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN result = 'draw' THEN 1 ELSE 0 END), 0)
+		FROM arena_duels
+		WHERE status = 'resolved'
+		  AND (challenger_id = ?1 OR opponent_id = ?1)
+	`
+
+	var record DuelRecord
+
+	if err := r.executor.QueryRowContext(ctx, query, userID).Scan(&record.Wins, &record.Losses, &record.Draws); err != nil {
+		return DuelRecord{}, fmt.Errorf("failed to count duel results: %w", err)
+	}
+
+	return record, nil
 }
 
 func (r *SQLiteDuelRepository) Resolve(ctx context.Context, duelID int64, challengerRoll, opponentRoll int, duelResult DuelResult) error {

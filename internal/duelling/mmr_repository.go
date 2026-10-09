@@ -19,7 +19,6 @@ type MMRRepository interface {
 	GetOrCreate(ctx context.Context, userID int64, defaultRating int) (int, error)
 	Set(ctx context.Context, userID int64, rating int) error
 	GetTopMMR(ctx context.Context) (MMREntry, error)
-	GetMMR(ctx context.Context, userID int64) (int64, error)
 }
 
 type SQLiteMMRRepository struct {
@@ -77,7 +76,7 @@ func (r *SQLiteMMRRepository) GetTopMMR(ctx context.Context) (MMREntry, error) {
 	const query = `
 		SELECT user_id, rating
 		FROM arena_duel_mmr
-		ORDER BY rating DESC
+		ORDER BY rating DESC, updated_at ASC, user_id ASC
 		LIMIT 1
 	`
 
@@ -95,24 +94,4 @@ func (r *SQLiteMMRRepository) GetTopMMR(ctx context.Context) (MMREntry, error) {
 	}
 
 	return MMREntry{UserID: userID, Rating: rating}, nil
-}
-
-func (r *SQLiteMMRRepository) GetMMR(ctx context.Context, userID int64) (int64, error) {
-	const query = `
-		SELECT rating
-		FROM arena_duel_mmr
-		WHERE user_id = ?
-	`
-
-	var rating int64
-
-	if err := r.executor.QueryRowContext(ctx, query, userID).Scan(&rating); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, nil
-		}
-
-		return 0, fmt.Errorf("failed to get mmr: %w", err)
-	}
-
-	return rating, nil
 }

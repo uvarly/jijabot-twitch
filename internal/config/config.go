@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"sort"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -48,7 +47,7 @@ type JijaBotConfig struct {
 
 type RanksEntry struct {
 	Name      string `yaml:"name" validate:"required"`
-	MinRating int    `yaml:"min_rating" validate:"required"`
+	MinRating int    `yaml:"min_rating" validate:"min=0"`
 }
 
 type CommandsConfig struct {
@@ -59,21 +58,21 @@ type CommandsConfig struct {
 
 type DailyConfig struct {
 	JijaCoinAmount int64 `yaml:"jija_coin_amount" validate:"required"`
-	ResetHourUTC   int   `yaml:"reset_hour_utc" validate:"required"`
+	ResetHourUTC   int   `yaml:"reset_hour_utc" validate:"min=0,max=23"`
 }
 
 type BetConfig struct {
 	BaseProbability float64 `yaml:"base_probability" validate:"required"`
 	PayoutMultiple  float64 `yaml:"payout_multiple" validate:"required"`
 	DailyLimit      int     `yaml:"daily_limit" validate:"required"`
-	ResetHourUTC    int     `yaml:"reset_hour_utc" validate:"required"`
+	ResetHourUTC    int     `yaml:"reset_hour_utc" validate:"min=0,max=23"`
 }
 
 type DuelConfig struct {
 	MMR MMRConfig
 
 	DailyLimit     int           `yaml:"daily_limit" validate:"required"`
-	ResetHourUTC   int           `yaml:"reset_hour_utc" validate:"required"`
+	ResetHourUTC   int           `yaml:"reset_hour_utc" validate:"min=0,max=23"`
 	ExpiryDuration time.Duration `yaml:"expiry_duration" validate:"required"`
 }
 
@@ -101,10 +100,6 @@ func NewConfig() (Config, error) {
 	if err := cfg.validate(); err != nil {
 		return Config{}, fmt.Errorf("failed to validate config: %w", err)
 	}
-
-	sort.Slice(cfg.JijaBot.Ranks, func(i, j int) bool {
-		return cfg.JijaBot.Ranks[i].MinRating > cfg.JijaBot.Ranks[j].MinRating
-	})
 
 	return cfg, nil
 }

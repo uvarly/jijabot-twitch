@@ -23,7 +23,7 @@ func Open(ctx context.Context, path string) (*sql.DB, error) {
 	}
 
 	db.SetMaxIdleConns(1)
-	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(1)
 
 	if err := Migrate(ctx, db); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
@@ -39,6 +39,9 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	}
 
 	provider, err := goose.NewProvider(goose.DialectSQLite3, db, sub)
+	if err != nil {
+		return fmt.Errorf("failed to create migration provider: %w", err)
+	}
 
 	if _, err := provider.Up(ctx); err != nil {
 		return fmt.Errorf("failed to apply migrations: %w", err)

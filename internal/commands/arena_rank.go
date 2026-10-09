@@ -68,5 +68,5 @@ func (c *ArenaRankCommand) Execute(ctx context.Context, p Payload, r Responder) 
 }
 
 func (c *ArenaRankCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaRankInternalError, scenario, p.User, arenaRankErrorData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaRank, scenario, p.User, arenaRankErrorData{User: p.User})
 }

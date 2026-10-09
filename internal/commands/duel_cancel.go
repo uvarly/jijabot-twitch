@@ -54,7 +54,7 @@ func (c *DuelCancelCommand) Execute(ctx context.Context, p Payload, r Responder)
 	case errors.Is(err, duelling.ErrNoOutgoingDuel):
 		return r.Say(c.pickError(ctx, phrasebookDuelCancelNoOutgoingDuel, p))
 	case err != nil:
-		c.log.ErrorContext(ctx, "failed to cancel duel", "user", p.User, "target_user", "error", err)
+		c.log.ErrorContext(ctx, "failed to cancel duel", "user", p.User, "error", err)
 		return r.Say(c.pickError(ctx, phrasebookDuelCancelInternalError, p))
 	}
 

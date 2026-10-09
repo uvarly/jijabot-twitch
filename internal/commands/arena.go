@@ -47,5 +47,5 @@ func (c *ArenaCommand) Execute(ctx context.Context, p Payload, r Responder) erro
 }
 
 func (c *ArenaCommand) pickError(ctx context.Context, scenario string, p Payload) string {
-	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaInternalError, scenario, p.User, arenaErrorData{User: p.User})
+	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArena, scenario, p.User, arenaErrorData{User: p.User})
 }

@@ -149,6 +149,10 @@ func (d *Duellist) Challenge(ctx context.Context, challengerTwitchID, challenger
 	challengePeriod := dailywindow.Key(d.clock.Now(), d.resetHour)
 
 	count, err := duelTx.CountInPeriod(ctx, challenger.ID, challengePeriod)
+	if err != nil {
+		return ChallengeResult{}, fmt.Errorf("failed to count challenger's duels: %w", err)
+	}
+
 	if count >= d.dailyLimit {
 		return ChallengeResult{}, ErrDailyLimitReached
 	}

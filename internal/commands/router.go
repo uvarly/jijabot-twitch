@@ -61,6 +61,6 @@ func (r *Router) HandleMessage(ctx context.Context, e eventbus.Event) {
 	}
 
 	if err := cmd.Execute(ctx, payload, r.responder); err != nil {
-		r.logger.Error("failed to execute command %q: %v", cmdName, err)
+		r.logger.Error("failed to execute command %q: %v", "command", cmdName, "error", err)
 	}
 }

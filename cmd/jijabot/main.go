@@ -126,6 +126,7 @@ func main() {
 		duelling.NewSQLiteDuelRepository(db),
 		duelling.NewSQLiteMMRRepository(db),
 		duelling.NewSQLiteMMRHistoryRepository(db),
+		cfg.JijaBot.Commands.Duel.MMR.ELO.DefaultRating,
 	)
 
 	var ranks = make([]duelling.Rank, 0, len(cfg.JijaBot.Ranks))

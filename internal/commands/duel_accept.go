@@ -61,7 +61,7 @@ func (c *DuelAcceptCommand) Execute(ctx context.Context, p Payload, r Responder)
 	case errors.Is(err, duelling.ErrInsufficientFunds):
 		return r.Say(c.pickError(ctx, phrasebookDuelAcceptInsufficientFunds, p))
 	case err != nil:
-		c.log.ErrorContext(ctx, "failed to accept duel", "user", p.User, "target_user", "error", err)
+		c.log.ErrorContext(ctx, "failed to accept duel", "user", p.User, "error", err)
 		return r.Say(c.pickError(ctx, phrasebookDuelAcceptInternalError, p))
 	}
 

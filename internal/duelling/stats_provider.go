@@ -31,6 +31,7 @@ type StatsProvider struct {
 	duelRepository       DuelRepository
 	mmrRepository        MMRRepository
 	mmrHistoryRepository MMRHistoryRepository
+	defaultRating        int
 }
 
 func NewStatsProvider(
@@ -39,6 +40,7 @@ func NewStatsProvider(
 	duelRepository DuelRepository,
 	mmrRepository MMRRepository,
 	mmrHistoryRepository MMRHistoryRepository,
+	defaultRating int,
 ) *StatsProvider {
 	return &StatsProvider{
 		txBeginner:           txBeginner,
@@ -46,12 +48,9 @@ func NewStatsProvider(
 		duelRepository:       duelRepository,
 		mmrRepository:        mmrRepository,
 		mmrHistoryRepository: mmrHistoryRepository,
+		defaultRating:        defaultRating,
 	}
 }
-
-// userTx := sp.userRepository.WithExecutor(tx)
-// mmrTx := sp.mmrRepository.WithExecutor(tx)
-// mmrHistoryTx := sp.mmrHistoryRepository.WithExecutor(tx)
 
 func (sp *StatsProvider) Top(ctx context.Context) (TopResult, error) {
 	tx, err := sp.txBeginner.BeginTx(ctx, nil)
@@ -62,7 +61,7 @@ func (sp *StatsProvider) Top(ctx context.Context) (TopResult, error) {
 
 	userTx := sp.userRepository.WithExecutor(tx)
 	mmrTx := sp.mmrRepository.WithExecutor(tx)
-	mmrHistoryTx := sp.mmrHistoryRepository.WithExecutor(tx)
+	duelTx := sp.duelRepository.WithExecutor(tx)
 
 	topMMREntry, err := mmrTx.GetTopMMR(ctx)
 	if err != nil {
@@ -82,15 +81,15 @@ func (sp *StatsProvider) Top(ctx context.Context) (TopResult, error) {
 		return TopResult{}, ErrNoTopUserYet
 	}
 
-	winCount, err := mmrHistoryTx.CountWinsByUserID(ctx, user.ID)
+	record, err := duelTx.CountResultsBy(ctx, user.ID)
 	if err != nil {
-		return TopResult{}, fmt.Errorf("failed to count wins: %w", err)
+		return TopResult{}, fmt.Errorf("failed to count duel results: %w", err)
 	}
 
 	return TopResult{
 		Username: user.Username,
 		MMR:      topMMREntry.Rating,
-		WinCount: winCount,
+		WinCount: record.Wins,
 	}, nil
 }
 
@@ -109,51 +108,21 @@ func (sp *StatsProvider) Stats(ctx context.Context, twitchUserID, username strin
 		return StatsResult{}, fmt.Errorf("failed to get or create user: %w", err)
 	}
 
-	resolvedDuels, err := duelTx.FindResolvedDuelsBy(ctx, user.ID)
+	record, err := duelTx.CountResultsBy(ctx, user.ID)
 	if err != nil {
-		return StatsResult{}, fmt.Errorf("failed to find resolved duels: %w", err)
+		return StatsResult{}, fmt.Errorf("failed to count duel results: %w", err)
 	}
 
-	var (
-		winCount, lossCount, drawCount int64
-		winRatePercent                 float64
-	)
+	var winRatePercent float64
 
-	for _, duel := range resolvedDuels {
-		if *duel.Result == DuelResultDraw {
-			drawCount++
-			continue
-		}
-
-		if duel.ChallengerID == user.ID {
-			if *duel.Result == DuelResultChallengerWon {
-				winCount++
-			} else {
-				lossCount++
-			}
-
-			continue
-		}
-
-		if duel.OpponentID == user.ID {
-			if *duel.Result == DuelResultOpponentWon {
-				winCount++
-			} else {
-				lossCount++
-			}
-
-			continue
-		}
-	}
-
-	if winCount+lossCount+drawCount != 0 {
-		winRatePercent = float64(winCount) / float64(winCount+lossCount+drawCount) * 100
+	if total := record.Wins + record.Losses + record.Draws; total > 0 {
+		winRatePercent = float64(record.Wins) / float64(total) * 100
 	}
 
 	return StatsResult{
-		WinCount:       winCount,
-		LossCount:      lossCount,
-		DrawCount:      drawCount,
+		WinCount:       record.Wins,
+		LossCount:      record.Losses,
+		DrawCount:      record.Draws,
 		WinRatePercent: winRatePercent,
 	}, nil
 }
@@ -173,11 +142,7 @@ func (sp *StatsProvider) Rating(ctx context.Context, twitchUserID, username stri
 		return 0, fmt.Errorf("failed to get or create user: %w", err)
 	}
 
-	if user.ID == 0 {
-		return 0, nil
-	}
-
-	rating, err := mmrTx.GetMMR(ctx, user.ID)
+	rating, err := mmrTx.GetOrCreate(ctx, user.ID, sp.defaultRating)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get MMR: %w", err)
 	}
