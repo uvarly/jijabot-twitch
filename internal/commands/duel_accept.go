@@ -80,6 +80,7 @@ func (c *DuelAcceptCommand) Execute(ctx context.Context, p Payload, r Responder)
 		data.Winner = result.OpponentName
 	case duelling.DuelResultDraw:
 		data.Winner = "Ничья"
+		return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelAccept, phrasebookDuelAcceptSuccessWithDraw, p.User, data))
 	}
 
 	return r.Say(pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookDuelAccept, phrasebookDuelAcceptSuccessWithWinner, p.User, data))

@@ -16,17 +16,25 @@ type arenaRankErrorData struct {
 	User string
 }
 
-type arenaRankData struct{}
-
-type ArenaRankCommand struct {
-	phrasePicker PhrasePicker
-	log          logger.Logger
+type arenaRankData struct {
+	User        string
+	Rank        string
+	RatingValue int
 }
 
-func NewArenaRankCommand(phrasePicker PhrasePicker, log logger.Logger) *ArenaRankCommand {
+type ArenaRankCommand struct {
+	rankProvider  RankProvider
+	statsProvider StatsProvider
+	phrasePicker  PhrasePicker
+	log           logger.Logger
+}
+
+func NewArenaRankCommand(rankProvider RankProvider, statsProvider StatsProvider, phrasePicker PhrasePicker, log logger.Logger) *ArenaRankCommand {
 	return &ArenaRankCommand{
-		phrasePicker: phrasePicker,
-		log:          log.With("command", "!arena_rank"),
+		rankProvider:  rankProvider,
+		statsProvider: statsProvider,
+		phrasePicker:  phrasePicker,
+		log:           log.With("command", "!arena_rank"),
 	}
 }
 
@@ -40,7 +48,20 @@ func (c *ArenaRankCommand) Execute(ctx context.Context, p Payload, r Responder) 
 		return r.Say(c.pickError(ctx, phrasebookArenaRankInternalError, p))
 	}
 
-	data := arenaRankData{}
+	rating, err := c.statsProvider.Rating(ctx, p.UserID, p.User)
+	if err != nil {
+		c.log.ErrorContext(ctx, "failed to get arena rank", "user_id", p.UserID, "error", err)
+		return r.Say(c.pickError(ctx, phrasebookArenaRankInternalError, p))
+	}
+
+	rank := c.rankProvider.Rank(rating)
+
+	data := arenaRankData{
+		User:        p.User,
+		Rank:        rank,
+		RatingValue: rating,
+	}
+
 	response := pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaRank, phrasebookArenaRankSuccess, p.User, data)
 
 	return r.Say(response)

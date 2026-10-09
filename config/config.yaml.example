@@ -2,7 +2,7 @@ database:
   path: "your_database_file_path"
 
 phrasebook:
-  path: "your_phrasebook_file_path"
+  path: "./config/phrasebook.yaml"
   required_entries:
     - hi.internal_error
     - hi.greeting
@@ -41,13 +41,23 @@ phrasebook:
     - duel_accept.internal_error
     - duel_accept.no_incoming_duel
     - duel_accept.insufficient_funds
-    - duel_accept.success
+    - duel_accept.success_with_winner
+    - duel_accept.success_with_draw
     - duel_decline.internal_error
     - duel_decline.no_incoming_duel
     - duel_decline.success
     - duel_cancel.internal_error
     - duel_cancel.no_outgoing_duel
     - duel_cancel.success
+    - arena.internal_error
+    - arena.success
+    - arena_top.internal_error
+    - arena_top.no_top_user_yet
+    - arena_top.success
+    - arena_stats.internal_error
+    - arena_stats.success
+    - arena_rank.internal_error
+    - arena_rank.success
 
 twitch_bot:
   username: "your_twitch_username"
@@ -59,20 +69,28 @@ oauth:
   token_file_path: "your_token_file_path"
 
 jija_bot:
-  streamer_twitch_user_id: "your_twitch_user_id"
-  daily:
-    jija_coin_amount: 10
-    reset_hour_utc: 12
-  bet:
-    base_probability: 0.45
-    payout_multiple: 2.0
-    daily_limit: 5
-    reset_hour_utc: 12
-  duel:
-    daily_limit: 5
-    reset_hour_utc: 12
-    expiry_duration: 5m
-    mmr:
-      elo:
-        default_rating: 1000
-        k_factor: 32
+  streamer_twitch_user_id: "42754848"
+  ranks:
+    - name: "Чмоня"
+      min_rating: 0
+    - name: "Жижик"
+      min_rating: 1500
+    - name: "Воин Жижи"
+      min_rating: 2000
+  commands:
+    daily:
+      jija_coin_amount: 10
+      reset_hour_utc: 12
+    bet:
+      base_probability: 0.45
+      payout_multiple: 2.0
+      daily_limit: 5
+      reset_hour_utc: 12
+    duel:
+      daily_limit: 20
+      reset_hour_utc: 12
+      expiry_duration: 5m
+      mmr:
+        elo:
+          default_rating: 1000
+          k_factor: 32

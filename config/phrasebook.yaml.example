@@ -161,8 +161,11 @@ duel_accept:
   insufficient_funds: # required params: {{.User}}
     - text: "@{{.User}}, у тебя недостаточно жижа-коинов для встречной ставки."
       weight: 1.0
-  success: # required params: {{.ChallengerUser}}, {{.OpponentUser}}
-    - text: "@{{.OpponentUser}} принял вызов от @{{.ChallengerUser}}."
+  success_with_winner: # required params: {{.ChallengerUser}}, {{.OpponentUser}}, {{.ChallengerRoll}}, {{.OpponentRoll}}, {{.Winner}}
+    - text: "@{{.OpponentUser}} принял вызов от @{{.ChallengerUser}}. Бросок @{{.ChallengerUser}}: {{.ChallengerRoll}}, @{{.OpponentUser}}: {{.OpponentRoll}}. Победитель: {{.Winner}}."
+      weight: 1.0
+  success_with_draw: # required params: {{.ChallengerUser}}, {{.OpponentUser}}, {{.ChallengerRoll}}, {{.OpponentRoll}}
+    - text: "@{{.OpponentUser}} принял вызов от @{{.ChallengerUser}}. Бросок @{{.ChallengerUser}}: {{.ChallengerRoll}}, @{{.OpponentUser}}: {{.OpponentRoll}}. Ничья."
       weight: 1.0
 
 duel_decline:

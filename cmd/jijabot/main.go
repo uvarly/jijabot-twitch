@@ -98,8 +98,8 @@ func main() {
 		users.NewSQLiteRepository(db),
 		reward.NewSQLiteRedeemHistoryRepository(db),
 		wallet.NewSQLiteRepository(db),
-		cfg.JijaBot.Daily.JijaCoinAmount,
-		cfg.JijaBot.Daily.ResetHourUTC,
+		cfg.JijaBot.Commands.Daily.JijaCoinAmount,
+		cfg.JijaBot.Commands.Daily.ResetHourUTC,
 	)
 
 	betPlacer := gambling.NewBetPlacer(
@@ -107,10 +107,10 @@ func main() {
 		users.NewSQLiteRepository(db),
 		gambling.NewSQLiteBetHistoryRepository(db),
 		wallet.NewSQLiteRepository(db),
-		cfg.JijaBot.Bet.BaseProbability,
-		cfg.JijaBot.Bet.PayoutMultiple,
-		cfg.JijaBot.Bet.DailyLimit,
-		cfg.JijaBot.Bet.ResetHourUTC,
+		cfg.JijaBot.Commands.Bet.BaseProbability,
+		cfg.JijaBot.Commands.Bet.PayoutMultiple,
+		cfg.JijaBot.Commands.Bet.DailyLimit,
+		cfg.JijaBot.Commands.Bet.ResetHourUTC,
 	)
 
 	granter := grant.NewGranter(
@@ -123,9 +123,18 @@ func main() {
 	statsProvider := duelling.NewStatsProvider(
 		db,
 		users.NewSQLiteRepository(db),
+		duelling.NewSQLiteDuelRepository(db),
 		duelling.NewSQLiteMMRRepository(db),
 		duelling.NewSQLiteMMRHistoryRepository(db),
 	)
+
+	var ranks = make([]duelling.Rank, 0, len(cfg.JijaBot.Ranks))
+
+	for _, rank := range cfg.JijaBot.Ranks {
+		ranks = append(ranks, duelling.Rank{Name: rank.Name, MinRating: rank.MinRating})
+	}
+
+	rankProvider := duelling.NewRankProvider(ranks)
 
 	duellist := duelling.NewDuellist(
 		db,
@@ -135,11 +144,11 @@ func main() {
 		duelling.NewSQLiteStakeHistoryRepository(db),
 		duelling.NewSQLiteMMRRepository(db),
 		duelling.NewSQLiteMMRHistoryRepository(db),
-		cfg.JijaBot.Duel.DailyLimit,
-		cfg.JijaBot.Duel.ResetHourUTC,
-		cfg.JijaBot.Duel.ExpiryDuration,
-		cfg.JijaBot.Duel.MMR.ELO.DefaultRating,
-		cfg.JijaBot.Duel.MMR.ELO.KFactor,
+		cfg.JijaBot.Commands.Duel.DailyLimit,
+		cfg.JijaBot.Commands.Duel.ResetHourUTC,
+		cfg.JijaBot.Commands.Duel.ExpiryDuration,
+		cfg.JijaBot.Commands.Duel.MMR.ELO.DefaultRating,
+		cfg.JijaBot.Commands.Duel.MMR.ELO.KFactor,
 	)
 
 	router := commands.NewRouter(bot, log)
@@ -150,6 +159,8 @@ func main() {
 	router.Register(commands.NewGrantCommand(streamerChecker, granter, phrasePicker, log))
 	router.Register(commands.NewArenaCommand(phrasePicker, log))
 	router.Register(commands.NewArenaTopCommand(statsProvider, phrasePicker, log))
+	router.Register(commands.NewArenaStatsCommand(statsProvider, phrasePicker, log))
+	router.Register(commands.NewArenaRankCommand(rankProvider, statsProvider, phrasePicker, log))
 	router.Register(commands.NewDuelCommand(duellist, phrasePicker, log))
 	router.Register(commands.NewDuelAcceptCommand(duellist, phrasePicker, log))
 	router.Register(commands.NewDuelDeclineCommand(duellist, phrasePicker, log))

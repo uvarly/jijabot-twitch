@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -40,11 +41,20 @@ type OauthConfig struct {
 }
 
 type JijaBotConfig struct {
+	Ranks                []RanksEntry   `yaml:"ranks" validate:"required"`
+	Commands             CommandsConfig `yaml:"commands" validate:"required"`
+	StreamerTwitchUserID string         `yaml:"streamer_twitch_user_id" validate:"required"`
+}
+
+type RanksEntry struct {
+	Name      string `yaml:"name" validate:"required"`
+	MinRating int    `yaml:"min_rating" validate:"required"`
+}
+
+type CommandsConfig struct {
 	Daily DailyConfig `yaml:"daily"`
 	Bet   BetConfig   `yaml:"bet"`
 	Duel  DuelConfig  `yaml:"duel"`
-
-	StreamerTwitchUserID string `yaml:"streamer_twitch_user_id" validate:"required"`
 }
 
 type DailyConfig struct {
@@ -91,6 +101,10 @@ func NewConfig() (Config, error) {
 	if err := cfg.validate(); err != nil {
 		return Config{}, fmt.Errorf("failed to validate config: %w", err)
 	}
+
+	sort.Slice(cfg.JijaBot.Ranks, func(i, j int) bool {
+		return cfg.JijaBot.Ranks[i].MinRating > cfg.JijaBot.Ranks[j].MinRating
+	})
 
 	return cfg, nil
 }

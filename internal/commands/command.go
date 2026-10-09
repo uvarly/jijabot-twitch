@@ -57,8 +57,12 @@ type Duellist interface {
 
 type StatsProvider interface {
 	Top(ctx context.Context) (duelling.TopResult, error)
-	Stats(ctx context.Context, twitchUserID string) (duelling.StatsResult, error)
-	Rank(ctx context.Context, twitchUserID string) (duelling.RankResult, error)
+	Stats(ctx context.Context, twitchUserID, username string) (duelling.StatsResult, error)
+	Rating(ctx context.Context, twitchUserID, username string) (int, error)
+}
+
+type RankProvider interface {
+	Rank(rating int) string
 }
 
 func pickPhraseOrFallback(ctx context.Context, log logger.Logger, phrasePicker PhrasePicker, command, scenario, user string, data any) string {
