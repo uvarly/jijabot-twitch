@@ -22,11 +22,17 @@ type duelAcceptErrorData struct {
 }
 
 type duelAcceptSuccessData struct {
-	ChallengerUser string
-	OpponentUser   string
-	ChallengerRoll int
-	OpponentRoll   int
-	Winner         string
+	ChallengerUser        string
+	OpponentUser          string
+	ChallengerRoll        int
+	OpponentRoll          int
+	Winner                string
+	Stake                 int64
+	Pot                   int64
+	NewChallengerBalance  int64
+	NewOpponentBalance    int64
+	ChallengerRatingDelta int
+	OpponentRatingDelta   int
 }
 
 type DuelAcceptCommand struct {
@@ -66,11 +72,17 @@ func (c *DuelAcceptCommand) Execute(ctx context.Context, p Payload, r Responder)
 	}
 
 	data := duelAcceptSuccessData{
-		ChallengerUser: result.ChallengerName,
-		OpponentUser:   result.OpponentName,
-		ChallengerRoll: result.ChallengerRoll,
-		OpponentRoll:   result.OpponentRoll,
-		Winner:         result.ChallengerName,
+		ChallengerUser:        result.ChallengerName,
+		OpponentUser:          result.OpponentName,
+		ChallengerRoll:        result.ChallengerRoll,
+		OpponentRoll:          result.OpponentRoll,
+		Winner:                result.ChallengerName,
+		Stake:                 result.Stake,
+		Pot:                   result.Pot,
+		NewChallengerBalance:  result.NewChallengerBalance,
+		NewOpponentBalance:    result.NewOpponentBalance,
+		ChallengerRatingDelta: result.ChallengerRatingDelta,
+		OpponentRatingDelta:   result.OpponentRatingDelta,
 	}
 
 	switch result.Result {

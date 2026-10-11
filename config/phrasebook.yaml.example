@@ -151,6 +151,18 @@ duel:
     - text: "@{{.ChallengerUser}} вызвал {{.OpponentUser}} на дуэль. Ставка: {{.Amount}} жижа-коинов."
       weight: 1.0
 
+# переменные доступные в success_with_winner и success_with_draw
+# {{.ChallengerUser}}        - тот, кто вызвал на дуэль
+# {{.OpponentUser}}          - тот, кого вызвали
+# {{.ChallengerRoll}}        - бросок инициатора
+# {{.OpponentRoll}}          - бросок оппонента
+# {{.Winner}}                - ник победителя
+# {{.Stake}}                 - сколько каждый поставил коинов по-отдельности
+# {{.Pot}}                   - сколько коинов в горшке
+# {{.NewChallengerBalance}}  - новый баланс инициатора
+# {{.NewOpponentBalance}}    - новый баланс оппонента
+# {{.ChallengerRatingDelta}} - изменение ММР инициатора
+# {{.OpponentRatingDelta}}   - изменение ММР оппонента
 duel_accept:
   internal_error: # required params: {{.User}}
     - text: "@{{.User}}, что-то пошло не так, попробуй позже."
