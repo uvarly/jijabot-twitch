@@ -94,3 +94,8 @@ jija_bot:
         elo:
           default_rating: 1000
           k_factor: 32
+    arena_top:
+      limit: 5
+
+logging:
+  level: "debug" # "debug", "info", "warn", "error"

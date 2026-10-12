@@ -31,7 +31,9 @@ type StatsProvider struct {
 	duelRepository       DuelRepository
 	mmrRepository        MMRRepository
 	mmrHistoryRepository MMRHistoryRepository
-	defaultRating        int
+
+	defaultRating int
+	topLimit      int
 }
 
 func NewStatsProvider(
@@ -41,6 +43,7 @@ func NewStatsProvider(
 	mmrRepository MMRRepository,
 	mmrHistoryRepository MMRHistoryRepository,
 	defaultRating int,
+	topLimit int,
 ) *StatsProvider {
 	return &StatsProvider{
 		txBeginner:           txBeginner,
@@ -49,6 +52,7 @@ func NewStatsProvider(
 		mmrRepository:        mmrRepository,
 		mmrHistoryRepository: mmrHistoryRepository,
 		defaultRating:        defaultRating,
+		topLimit:             topLimit,
 	}
 }
 

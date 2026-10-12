@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,21 +28,29 @@ import (
 )
 
 func main() {
+	log := logger.NewSlogLogger(logger.WithTextFormat(), logger.WithSource())
+
+	if err := run(log); err != nil {
+		log.Error("exited with error", "error", err)
+		wait()
+		os.Exit(1)
+	}
+}
+
+func run(log logger.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log := logger.NewSlogLogger(logger.WithLevel(slog.LevelDebug), logger.WithTextFormat(), logger.WithSource())
-	// log := logger.NewSlogLogger(logger.WithLevel(slog.LevelInfo), logger.WithTextFormat())
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Error("failed to load config", "error", err)
-		return
+		return fmt.Errorf("failed to load config: %w", err)
 	}
+
+	log = logger.NewSlogLogger(logger.WithLevel(logger.SlogLevel(cfg.Logging.Level)), logger.WithTextFormat(), logger.WithSource())
 
 	db, err := database.Open(ctx, cfg.Database.Path)
 	if err != nil {
-		log.Error("failed to open database", "error", err)
-		return
+		return fmt.Errorf("failed to open database: %w", err)
 	}
 	defer db.Close()
 
@@ -59,8 +67,7 @@ func main() {
 		)
 
 		if _, err = oauth.Bootstrap(ctx, os.Stdout, deviceAuthorizer, store); err != nil {
-			log.Error("failed to bootstrap oauth token", "error", err)
-			return
+			return fmt.Errorf("failed to bootstrap oauth token: %w", err)
 		}
 	}
 
@@ -68,21 +75,18 @@ func main() {
 	tokenSource := oauth.NewSource(store, refresher)
 	bot, err := twitchbot.NewTwitchBot(cfg, bus, tokenSource, log.With("component", "twitchbot"))
 	if err != nil {
-		log.Error("failed to create twitch bot", "error", err)
-		return
+		return fmt.Errorf("failed to create twitch bot: %w", err)
 	}
 
 	streamerChecker := authorization.NewStreamerChecker(cfg.JijaBot.StreamerTwitchUserID)
 
 	phraseBook, err := phrasebook.NewPhrasebook(cfg.Phrasebook.Path)
 	if err != nil {
-		log.Error("failed to load phrasebook", "error", err)
-		return
+		return fmt.Errorf("failed to load phrasebook: %w", err)
 	}
 
 	if err := phraseBook.ValidateEntries(cfg.Phrasebook.RequiredEntries...); err != nil {
-		log.Error("failed to validate phrasebook", "error", err)
-		return
+		return fmt.Errorf("failed to validate phrasebook: %w", err)
 	}
 
 	phrasePicker := phrasebook.NewPicker(phraseBook)
@@ -127,6 +131,7 @@ func main() {
 		duelling.NewSQLiteMMRRepository(db),
 		duelling.NewSQLiteMMRHistoryRepository(db),
 		cfg.JijaBot.Commands.Duel.MMR.ELO.DefaultRating,
+		cfg.JijaBot.Commands.ArenaTop.Limit,
 	)
 
 	var ranks = make([]duelling.Rank, 0, len(cfg.JijaBot.Ranks))
@@ -175,8 +180,7 @@ func main() {
 
 	select {
 	case err := <-appRunErr:
-		log.Error("failed to run app", "error", err)
-		return
+		return fmt.Errorf("failed to run app: %w", err)
 	case <-ctx.Done():
 		log.Info("shutdown signal received, shutting down...")
 	}
@@ -185,6 +189,8 @@ func main() {
 	defer cancel()
 
 	if err := application.Shutdown(shutdownCtx); err != nil {
-		log.Error("failed to shutdown app", "error", err)
+		return fmt.Errorf("failed to shutdown app: %w", err)
 	}
+
+	return nil
 }

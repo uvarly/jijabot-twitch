@@ -9,14 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const configPath = "./config/config.yaml"
-
 type Config struct {
 	Database   DatabaseConfig   `yaml:"database"`
 	Phrasebook PhrasebookConfig `yaml:"phrasebook"`
 	TwitchBot  TwitchBotConfig  `yaml:"twitch_bot"`
 	Oauth      OauthConfig      `yaml:"oauth"`
 	JijaBot    JijaBotConfig    `yaml:"jija_bot"`
+	Logging    LoggingConfig    `yaml:"logging"`
 }
 
 type DatabaseConfig struct {
@@ -51,9 +50,10 @@ type RanksEntry struct {
 }
 
 type CommandsConfig struct {
-	Daily DailyConfig `yaml:"daily"`
-	Bet   BetConfig   `yaml:"bet"`
-	Duel  DuelConfig  `yaml:"duel"`
+	Daily    DailyConfig    `yaml:"daily"`
+	Bet      BetConfig      `yaml:"bet"`
+	Duel     DuelConfig     `yaml:"duel"`
+	ArenaTop ArenaTopConfig `yaml:"arena_top"`
 }
 
 type DailyConfig struct {
@@ -76,6 +76,10 @@ type DuelConfig struct {
 	ExpiryDuration time.Duration `yaml:"expiry_duration" validate:"required"`
 }
 
+type ArenaTopConfig struct {
+	Limit int `yaml:"limit" validate:"min=0"`
+}
+
 type MMRConfig struct {
 	ELO ELOConfig `yaml:"elo"`
 }
@@ -83,6 +87,10 @@ type MMRConfig struct {
 type ELOConfig struct {
 	DefaultRating int `yaml:"default_rating" validate:"required"`
 	KFactor       int `yaml:"k_factor" validate:"required"`
+}
+
+type LoggingConfig struct {
+	Level string `yaml:"level" validate:"required"`
 }
 
 func NewConfig() (Config, error) {

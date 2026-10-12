@@ -122,3 +122,18 @@ func (sl *slogLogger) ErrorContext(ctx context.Context, m string, args ...any) {
 func (sl *slogLogger) With(args ...any) Logger {
 	return &slogLogger{l: sl.l.With(args...)}
 }
+
+func SlogLevel(level string) slog.Level {
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
