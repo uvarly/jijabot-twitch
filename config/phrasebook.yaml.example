@@ -96,8 +96,8 @@ arena_top:
   no_top_user_yet: # required params: {{.User}}
     - text: "@{{.User}}, никто ещё не занял первое место."
       weight: 1.0
-  success: # required params: {{.User}}, {{.RatingValue}}, {{.WinCount}}
-    - text: "{{.User}} — {{.RatingValue}} MMR — {{.WinCount}} побед."
+  success: # required params: {{.Place}}, {{.User}}, {{.RatingValue}}, {{.WinCount}}
+    - text: "{{.Place}} {{.User}} — {{.RatingValue}} MMR — {{.WinCount}} побед."
       weight: 1.0
 
 arena_stats:
