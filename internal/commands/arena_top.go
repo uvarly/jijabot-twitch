@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"jijabot/internal/duelling"
 	"jijabot/internal/logger"
@@ -13,6 +15,8 @@ const (
 	phrasebookArenaTopInternalError = "internal_error"
 	phrasebookArenaTopNoTopUserYet  = "no_top_user_yet"
 	phrasebookArenaTopSuccess       = "success"
+
+	arenaTopSeparator = " | "
 )
 
 type arenaTopErrorData struct {
@@ -20,6 +24,7 @@ type arenaTopErrorData struct {
 }
 
 type arenaTopData struct {
+	Place       string
 	User        string
 	RatingValue int64
 	WinCount    int64
@@ -59,17 +64,33 @@ func (c *ArenaTopCommand) Execute(ctx context.Context, p Payload, r Responder) e
 		return r.Say(c.pickError(ctx, phrasebookArenaTopInternalError, p))
 	}
 
-	data := arenaTopData{
-		User:        top.Username,
-		RatingValue: top.MMR,
-		WinCount:    top.WinCount,
+	lines := make([]string, 0, len(top.Entries))
+
+	for i, entry := range top.Entries {
+		data := arenaTopData{
+			Place:       keycap(i + 1),
+			User:        entry.Username,
+			RatingValue: entry.MMR,
+			WinCount:    entry.WinCount,
+		}
+
+		lines = append(lines, pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaTop, phrasebookArenaTopSuccess, p.User, data))
 	}
 
-	response := pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaTop, phrasebookArenaTopSuccess, p.User, data)
-
-	return r.Say(response)
+	return r.Say(strings.Join(lines, arenaTopSeparator))
 }
 
 func (c *ArenaTopCommand) pickError(ctx context.Context, scenario string, p Payload) string {
 	return pickPhraseOrFallback(ctx, c.log, c.phrasePicker, phrasebookArenaTop, scenario, p.User, arenaTopErrorData{User: p.User})
+}
+
+func keycap(n int) string {
+	var b strings.Builder
+
+	for _, digit := range strconv.Itoa(n) {
+		b.WriteRune(digit)
+		b.WriteString("\uFE0F\u20E3")
+	}
+
+	return b.String()
 }

@@ -8,10 +8,14 @@ import (
 	"jijabot/internal/users"
 )
 
-type TopResult struct {
+type TopEntry struct {
 	Username string
 	MMR      int64
 	WinCount int64
+}
+
+type TopResult struct {
+	Entries []TopEntry
 }
 
 type StatsResult struct {
@@ -67,34 +71,40 @@ func (sp *StatsProvider) Top(ctx context.Context) (TopResult, error) {
 	mmrTx := sp.mmrRepository.WithExecutor(tx)
 	duelTx := sp.duelRepository.WithExecutor(tx)
 
-	topMMREntry, err := mmrTx.GetTopMMR(ctx)
+	topMMREntries, err := mmrTx.GetTopMMR(ctx, sp.topLimit)
 	if err != nil {
-		return TopResult{}, fmt.Errorf("failed to get top MMR entry: %w", err)
+		return TopResult{}, fmt.Errorf("failed to get top MMR entries: %w", err)
 	}
 
-	if topMMREntry.UserID == 0 {
-		return TopResult{}, ErrNoTopUserYet
+	entries := make([]TopEntry, 0, len(topMMREntries))
+
+	for _, mmrEntry := range topMMREntries {
+		user, found, err := userTx.GetByID(ctx, mmrEntry.UserID)
+		if err != nil {
+			return TopResult{}, fmt.Errorf("failed to get user: %w", err)
+		}
+
+		if !found {
+			continue
+		}
+
+		record, err := duelTx.CountResultsBy(ctx, mmrEntry.UserID)
+		if err != nil {
+			return TopResult{}, fmt.Errorf("failed to count duel results: %w", err)
+		}
+
+		entries = append(entries, TopEntry{
+			Username: user.Username,
+			MMR:      mmrEntry.Rating,
+			WinCount: record.Wins,
+		})
 	}
 
-	user, found, err := userTx.GetByID(ctx, topMMREntry.UserID)
-	if err != nil {
-		return TopResult{}, fmt.Errorf("failed to get user: %w", err)
+	if len(entries) == 0 {
+		return TopResult{Entries: entries}, ErrNoTopUserYet
 	}
 
-	if !found {
-		return TopResult{}, ErrNoTopUserYet
-	}
-
-	record, err := duelTx.CountResultsBy(ctx, user.ID)
-	if err != nil {
-		return TopResult{}, fmt.Errorf("failed to count duel results: %w", err)
-	}
-
-	return TopResult{
-		Username: user.Username,
-		MMR:      topMMREntry.Rating,
-		WinCount: record.Wins,
-	}, nil
+	return TopResult{Entries: entries}, nil
 }
 
 func (sp *StatsProvider) Stats(ctx context.Context, twitchUserID, username string) (StatsResult, error) {

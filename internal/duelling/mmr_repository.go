@@ -2,8 +2,6 @@ package duelling
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"jijabot/internal/store"
@@ -18,7 +16,7 @@ type MMRRepository interface {
 	WithExecutor(executor store.Executor) MMRRepository
 	GetOrCreate(ctx context.Context, userID int64, defaultRating int) (int, error)
 	Set(ctx context.Context, userID int64, rating int) error
-	GetTopMMR(ctx context.Context) (MMREntry, error)
+	GetTopMMR(ctx context.Context, limit int) ([]MMREntry, error)
 }
 
 type SQLiteMMRRepository struct {
@@ -72,26 +70,35 @@ func (r *SQLiteMMRRepository) Set(ctx context.Context, userID int64, rating int)
 	return nil
 }
 
-func (r *SQLiteMMRRepository) GetTopMMR(ctx context.Context) (MMREntry, error) {
+func (r *SQLiteMMRRepository) GetTopMMR(ctx context.Context, limit int) ([]MMREntry, error) {
 	const query = `
 		SELECT user_id, rating
 		FROM arena_duel_mmr
 		ORDER BY rating DESC, updated_at ASC, user_id ASC
-		LIMIT 1
+		LIMIT ?
 	`
 
-	var (
-		userID int64
-		rating int64
-	)
+	rows, err := r.executor.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get top mmr entries: %w", err)
+	}
+	defer rows.Close()
 
-	if err := r.executor.QueryRowContext(ctx, query).Scan(&userID, &rating); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return MMREntry{}, nil
+	var entries []MMREntry
+
+	for rows.Next() {
+		var entry MMREntry
+
+		if err := rows.Scan(&entry.UserID, &entry.Rating); err != nil {
+			return nil, fmt.Errorf("failed to scan top mmr entry: %w", err)
 		}
 
-		return MMREntry{}, fmt.Errorf("failed to get top mmr entry: %w", err)
+		entries = append(entries, entry)
 	}
 
-	return MMREntry{UserID: userID, Rating: rating}, nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate top mmr entries: %w", err)
+	}
+
+	return entries, nil
 }
